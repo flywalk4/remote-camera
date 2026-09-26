@@ -1,3 +1,5 @@
-node_modules/
-.cert/
 .DS_Store
+*.xcodeproj/
+RemoteCamera/Info.plist
+xcuserdata/
+DerivedData/
