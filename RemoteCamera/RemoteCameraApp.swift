@@ -23,12 +23,15 @@ final class AppModel: ObservableObject {
     private var server: HTTPServer?
 
     @Published var addresses: [String] = []
+    /// Текущее состояние камеры — для панели настроек на экране iPhone.
+    @Published var cameraState: CameraState?
     @Published var serverError: String?
     @Published var dimmed = false {
         didSet { applyBrightness() }
     }
     private var savedBrightness: CGFloat = 0.5
     private var timer: Timer?
+    private var stateTimer: Timer?
 
     init() {
         let store = PhotoStore()
@@ -49,6 +52,7 @@ final class AppModel: ObservableObject {
         UIDevice.current.isBatteryMonitoringEnabled = true
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in self?.refresh() }
+        stateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.pollCamera() }
     }
 
     var urls: [String] {
@@ -74,6 +78,21 @@ final class AppModel: ObservableObject {
         } else {
             UIScreen.main.brightness = savedBrightness
         }
+    }
+
+    private func pollCamera() {
+        let camera = self.camera
+        // state() ждёт очередь камеры — не блокируем главный поток.
+        DispatchQueue.global(qos: .userInitiated).async {
+            let state = camera.state()
+            DispatchQueue.main.async { [weak self] in self?.cameraState = state }
+        }
+    }
+
+    func apply(_ change: (inout SettingsUpdate) -> Void) {
+        var update = SettingsUpdate()
+        change(&update)
+        camera.apply(update)
     }
 
     func quickCapture() {

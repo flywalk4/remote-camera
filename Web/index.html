@@ -50,7 +50,8 @@
           <button data-v="auto">Авто</button><button data-v="manual">Ручная</button>
         </span>
       </h3>
-      <div data-show="exp-manual">
+      <div>
+        <p class="hint" data-show="exp-auto">Сейчас ISO и выдержку подбирает iPhone. Сдвиньте любой слайдер — экспозиция перейдёт в ручной режим.</p>
         <div class="row"><label for="iso">ISO</label><output id="isoOut"></output></div>
         <input type="range" id="iso" min="0" max="1000">
         <div class="chips" id="isoChips"></div>
@@ -58,8 +59,8 @@
         <input type="range" id="shutter" min="0" max="1000">
         <div class="chips" id="shutterChips"></div>
       </div>
-      <div data-show="exp-auto">
-        <div class="row"><label for="bias">Коррекция EV</label><output id="biasOut"></output></div>
+      <div data-dim="exp-manual">
+        <div class="row"><label for="bias">Коррекция EV <span class="muted">(только в авто)</span></label><output id="biasOut"></output></div>
         <input type="range" id="bias" min="-8" max="8" step="0.1" value="0">
         <p class="hint">Клик по превью — точка замера экспозиции и фокуса.</p>
       </div>

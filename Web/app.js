@@ -114,8 +114,10 @@ function render() {
   $('zoomOut').textContent = `${s.zoom.toFixed(1)}×`;
 
   // Экспозиция
-  setSegment('expMode', s.exposureMode);
-  document.body.dataset.exp = s.exposureMode;
+  if (!isTouched('expMode')) {
+    setSegment('expMode', s.exposureMode);
+    document.body.dataset.exp = s.exposureMode;
+  }
   if (!isTouched('iso')) $('iso').value = fromLog(s.iso, s.minISO, s.maxISO);
   if (!isTouched('shutter')) $('shutter').value = fromLog(s.shutter, s.minShutter, s.maxShutter);
   if (!isTouched('iso')) $('isoOut').textContent = Math.round(s.iso);
@@ -244,6 +246,9 @@ function bindSlider(id, handler) {
 
 function setManual(key, value) {
   touched[key] = Date.now();
+  touched.expMode = Date.now();
+  setSegment('expMode', 'manual');
+  document.body.dataset.exp = 'manual';
   if (key === 'iso') {
     $('iso').value = fromLog(value, state.minISO, state.maxISO);
     $('isoOut').textContent = Math.round(value);

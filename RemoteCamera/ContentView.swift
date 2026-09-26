@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var showControls = true
 
     var body: some View {
         ZStack {
@@ -13,11 +14,23 @@ struct ContentView: View {
             VStack(spacing: 12) {
                 infoCard
                 Spacer()
-                HStack(spacing: 40) {
+                if showControls {
+                    CameraControlsView()
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                HStack(spacing: 24) {
+                    Button {
+                        withAnimation { showControls.toggle() }
+                    } label: {
+                        Label("Настройки", systemImage: "slider.horizontal.3")
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(showControls ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.ultraThinMaterial), in: Capsule())
+                    }
                     Button {
                         model.dimmed = true
                     } label: {
-                        Label("Затемнить", systemImage: "moon.fill")
+                        Image(systemName: "moon.fill")
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
                             .background(.ultraThinMaterial, in: Capsule())

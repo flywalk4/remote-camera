@@ -176,7 +176,8 @@ final class CameraController: NSObject, @unchecked Sendable {
             guard let device else { return }
 
             // Переход в ручной режим без значений — «замораживаем» текущие.
-            if update.exposureMode == "manual" && !desired.manualExposure {
+            let toManualExposure = update.exposureMode == "manual" || update.iso != nil || update.shutter != nil
+            if toManualExposure && !desired.manualExposure {
                 desired.iso = Double(device.iso)
                 desired.shutter = device.exposureDuration.seconds
             }
@@ -191,7 +192,8 @@ final class CameraController: NSObject, @unchecked Sendable {
             if let mode = update.focusMode { desired.manualFocus = mode == "manual" }
             if let pos = update.lensPosition { desired.lensPosition = pos; desired.manualFocus = true }
 
-            if update.wbMode == "manual" && !desired.manualWB {
+            let toManualWB = update.wbMode == "manual" || update.temperature != nil || update.tint != nil
+            if toManualWB && !desired.manualWB {
                 let current = device.temperatureAndTintValues(for: device.deviceWhiteBalanceGains)
                 desired.temperature = Double(current.temperature)
                 desired.tint = Double(current.tint)
