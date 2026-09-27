@@ -87,8 +87,10 @@ struct CaptureRequest: Decodable {
     var interval = 0.0
     var delay = 0.0
     var saveToPhotos = false
+    /// "max" — full sensor resolution (up to 48 MP), "12mp" — standard size.
+    var resolution = "max"
 
-    enum CodingKeys: String, CodingKey { case format, count, interval, delay, saveToPhotos }
+    enum CodingKeys: String, CodingKey { case format, count, interval, delay, saveToPhotos, resolution }
 
     init() {}
 
@@ -99,6 +101,7 @@ struct CaptureRequest: Decodable {
         interval = max(0, try c.decodeIfPresent(Double.self, forKey: .interval) ?? 0)
         delay = max(0, min(try c.decodeIfPresent(Double.self, forKey: .delay) ?? 0, 60))
         saveToPhotos = try c.decodeIfPresent(Bool.self, forKey: .saveToPhotos) ?? false
+        resolution = try c.decodeIfPresent(String.self, forKey: .resolution) ?? "max"
     }
 }
 

@@ -96,6 +96,6 @@ final class AppModel: ObservableObject {
     }
 
     func quickCapture() {
-        _ = camera.capture(CaptureRequest())
+        camera.quickCapture()
     }
 }

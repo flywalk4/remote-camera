@@ -36,7 +36,9 @@ by the iPhone app itself.
 - Formats: HEIF, JPEG, **RAW (DNG)**, **Apple ProRAW** (Pro models).
 - Delay before the shot (2/5/10 s) so the tripod stops shaking after you press the button.
 - **Series**: N frames at an interval — for stacking in AutoStakkert!, Siril, RegiStax, etc.
-- Full sensor resolution (up to 48 MP on recent models) for HEIF/JPEG/ProRAW.
+- Resolution: full sensor (up to 48 MP on recent models) or 12 MP, for HEIF/JPEG/ProRAW.
+- Manual settings are guarded: if iOS resets exposure/focus/white balance (e.g. around a
+  48 MP capture), the app immediately restores them, and re-applies them before and after every shot.
 - Photos are stored on the iPhone (visible in Files → On My iPhone → Remote Camera),
   can be downloaded to the Mac from the remote, and optionally saved to Photos.
 
@@ -48,6 +50,7 @@ by the iPhone app itself.
 
 **The iPhone app** shows the remote's address, a preview, a shutter button and a **settings
 panel** ("Settings" button): lens, ISO, shutter speed, focus — kept in sync with the Mac remote.
+The iPhone shutter button reuses the format, resolution and delay last chosen in the remote.
 The 🌙 button blacks out the screen (minimum brightness) while the app keeps running.
 
 ## Installing on the iPhone
@@ -127,6 +130,14 @@ In Xcode:
 Exposure on an iPhone is limited to about 1 second — more than enough for the Moon, but this
 approach won't work for stars or the Milky Way.
 
+## Troubleshooting
+
+**Manual settings reset / the camera refocuses when shooting.** A full-resolution (48 MP)
+capture makes the sensor switch readout mode, and iOS may fall back to auto exposure and
+autofocus while doing so. The app restores your settings right away, but if the photo itself
+comes out refocused or auto-exposed, set **Resolution → 12 MP** in the Capture section
+(or use RAW, which is always 12 MP).
+
 ## Project layout
 
 ```
@@ -151,7 +162,7 @@ Web/                               web remote (served by the app)
 |---|---|---|
 | GET | `/api/state` | All current camera parameters and ranges |
 | POST | `/api/settings` | `{lens, zoom, exposureMode, iso, shutter, bias, focusMode, lensPosition, wbMode, temperature, tint, point:{x,y}, loupe}` — any subset |
-| POST | `/api/capture` | `{format: heif\|jpeg\|raw\|proraw, count, interval, delay, saveToPhotos}` |
+| POST | `/api/capture` | `{format: heif\|jpeg\|raw\|proraw, count, interval, delay, saveToPhotos, resolution: max\|12mp}` |
 | POST | `/api/cancel` | Cancel a series |
 | GET | `/api/photos` | List photos |
 | GET | `/photos/<name>` | File (`?download=1` to download) |

@@ -51,6 +51,11 @@ final class CameraController: NSObject, @unchecked Sendable {
     private var captureStatus = CaptureStatus()
     private var cancelRequested = false
     private var processors: [Int64: PhotoProcessor] = [:]
+    /// Settings of the last capture from the remote — reused by the shutter button on the iPhone.
+    private var lastRequest = CaptureRequest()
+
+    // Watches the device for AVFoundation silently dropping manual modes.
+    private var observations: [NSKeyValueObservation] = []
 
     // Battery (updated from the main thread — UIDevice must not be read in the background)
     private var battery = (level: -1.0, charging: false)
@@ -136,6 +141,7 @@ final class CameraController: NSObject, @unchecked Sendable {
         }
         session.commitConfiguration()
         configurePhotoOutput()
+        observeDevice()
     }
 
     private func configurePhotoOutput() {
@@ -163,8 +169,38 @@ final class CameraController: NSObject, @unchecked Sendable {
         }
         session.commitConfiguration()
         configurePhotoOutput()
+        observeDevice()
         desired.zoom = 1
         applyAll()
+    }
+
+    /// iOS can reset the camera to auto exposure / autofocus on its own — most notably
+    /// around a full-resolution (48 MP) capture, when the sensor switches readout mode.
+    /// Whenever the device leaves a manual mode the user chose, put it back.
+    private func observeDevice() {
+        observations = []
+        guard let device else { return }
+        let onChange: () -> Void = { [weak self] in
+            self?.sessionQueue.async { self?.enforceDesired() }
+        }
+        observations = [
+            device.observe(\.exposureMode, options: [.new]) { _, _ in onChange() },
+            device.observe(\.focusMode, options: [.new]) { _, _ in onChange() },
+            device.observe(\.whiteBalanceMode, options: [.new]) { _, _ in onChange() },
+        ]
+    }
+
+    /// Re-applies the user's settings if the device drifted away from a manual mode.
+    private func enforceDesired() {
+        guard let device else { return }
+        let drifted = (desired.manualExposure && device.exposureMode != .custom)
+            || (desired.manualFocus && device.focusMode != .locked)
+            || (desired.manualWB && device.whiteBalanceMode != .locked)
+        if drifted { applyAll() }
+    }
+
+    private var hasManualSettings: Bool {
+        desired.manualExposure || desired.manualFocus || desired.manualWB
     }
 
     // MARK: - Settings
@@ -353,11 +389,23 @@ final class CameraController: NSObject, @unchecked Sendable {
         if captureStatus.busy { return "A capture is already in progress" }
         captureStatus = CaptureStatus(busy: true, total: request.count, done: 0, countdown: Int(request.delay.rounded(.up)))
         cancelRequested = false
+        lastRequest = request
         if request.saveToPhotos {
             PHPhotoLibrary.requestAuthorization(for: .addOnly) { _ in }
         }
         seriesQueue.async { [self] in runSeries(request) }
         return nil
+    }
+
+    /// Shutter button on the iPhone: one frame with the format/resolution/delay last used
+    /// from the remote (the delay matters — touching the phone shakes the tripod).
+    func quickCapture() {
+        lock.lock()
+        var request = lastRequest
+        lock.unlock()
+        request.count = 1
+        request.interval = 0
+        _ = capture(request)
     }
 
     func cancelCapture() {
@@ -404,7 +452,7 @@ final class CameraController: NSObject, @unchecked Sendable {
             let semaphore = DispatchSemaphore(value: 0)
             var error: String?
             sessionQueue.async { [self] in
-                captureOne(format: request.format, saveToPhotos: request.saveToPhotos) { err in
+                captureOne(request) { err in
                     error = err
                     semaphore.signal()
                 }
@@ -424,8 +472,14 @@ final class CameraController: NSObject, @unchecked Sendable {
         updateStatus { $0.busy = false; $0.countdown = 0 }
     }
 
-    private func captureOne(format: String, saveToPhotos: Bool, completion: @escaping (String?) -> Void) {
+    private func captureOne(_ request: CaptureRequest, completion: @escaping (String?) -> Void) {
         guard session.isRunning else { completion("The camera is not running"); return }
+        // Make sure the frame is shot with the user's settings, even if iOS reset them since.
+        if hasManualSettings { applyAll() }
+
+        let format = request.format
+        let saveToPhotos = request.saveToPhotos
+        let dimensions = photoDimensions(fullResolution: request.resolution != "12mp")
         let settings: AVCapturePhotoSettings
         let ext: String
         let raw = photoOutput.availableRawPhotoPixelFormatTypes
@@ -442,11 +496,11 @@ final class CameraController: NSObject, @unchecked Sendable {
                 completion("ProRAW is not available on this iPhone"); return
             }
             settings = AVCapturePhotoSettings(rawPixelFormatType: type)
-            settings.maxPhotoDimensions = photoOutput.maxPhotoDimensions
+            settings.maxPhotoDimensions = dimensions
             ext = "dng"
         case "jpeg":
             settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
-            settings.maxPhotoDimensions = photoOutput.maxPhotoDimensions
+            settings.maxPhotoDimensions = dimensions
             // In manual mode use minimal "smart" processing so the frame matches the settings.
             settings.photoQualityPrioritization = desired.manualExposure ? .speed : .quality
             ext = "jpg"
@@ -458,7 +512,7 @@ final class CameraController: NSObject, @unchecked Sendable {
                 settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
                 ext = "jpg"
             }
-            settings.maxPhotoDimensions = photoOutput.maxPhotoDimensions
+            settings.maxPhotoDimensions = dimensions
             settings.photoQualityPrioritization = desired.manualExposure ? .speed : .quality
         }
 
@@ -468,6 +522,8 @@ final class CameraController: NSObject, @unchecked Sendable {
             self.lock.lock()
             self.processors[id] = nil
             self.lock.unlock()
+            // Restore manual settings right after the shot in case the capture reset them.
+            self.sessionQueue.async { if self.hasManualSettings { self.applyAll() } }
             guard let data else {
                 completion(error ?? "Empty frame")
                 return
@@ -484,6 +540,19 @@ final class CameraController: NSObject, @unchecked Sendable {
         processors[id] = processor
         lock.unlock()
         photoOutput.capturePhoto(with: settings, delegate: processor)
+    }
+
+    /// Full sensor resolution (up to 48 MP) or the standard ~12 MP size. 12 MP avoids the
+    /// sensor mode switch that a 48 MP capture needs.
+    private func photoDimensions(fullResolution: Bool) -> CMVideoDimensions {
+        guard !fullResolution, let device else { return photoOutput.maxPhotoDimensions }
+        let area = { (d: CMVideoDimensions) in Int(d.width) * Int(d.height) }
+        let sizes = device.activeFormat.supportedMaxPhotoDimensions.sorted { area($0) < area($1) }
+        let standard = sizes.first { area($0) >= 10_000_000 } ?? sizes.last
+        guard let standard, area(standard) <= area(photoOutput.maxPhotoDimensions) else {
+            return photoOutput.maxPhotoDimensions
+        }
+        return standard
     }
 
     private static func saveToLibrary(_ data: Data) {

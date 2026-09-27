@@ -155,6 +155,9 @@ function render() {
   $('tintOut').textContent = Math.round(s.tint);
 
   renderFormats(s.formats);
+  // Bayer RAW is always captured at the sensor's standard size.
+  $('resolutionField').hidden = $('format').value === 'raw';
+  if (s.resolution) $('resolution').options[0].textContent = `Maximum (${s.resolution})`;
   renderCapture(s.capture);
 
   const lens = s.lenses.find((l) => l.id === s.lens);
@@ -330,7 +333,11 @@ preview.addEventListener('click', (e) => {
 async function shoot() {
   if (!online || state?.capture.busy) return;
   const format = $('format').value;
-  try { localStorage.setItem('format', format); } catch {}
+  const resolution = $('resolution').value;
+  try {
+    localStorage.setItem('format', format);
+    localStorage.setItem('resolution', resolution);
+  } catch {}
   try {
     await api('/api/capture', {
       format,
@@ -338,6 +345,7 @@ async function shoot() {
       interval: Math.max(0, Number($('interval').value) || 0),
       delay: Number($('delay').value),
       saveToPhotos: $('saveToPhotos').checked,
+      resolution,
     });
     $('frame').classList.add('flash');
     setTimeout(() => $('frame').classList.remove('flash'), 150);
@@ -481,5 +489,10 @@ document.addEventListener('keydown', (e) => {
     case 'BracketRight': nudgeFocus(step); break;
   }
 });
+
+try {
+  const saved = localStorage.getItem('resolution');
+  if (saved) $('resolution').value = saved;
+} catch {}
 
 poll();
