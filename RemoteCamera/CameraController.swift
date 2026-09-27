@@ -11,6 +11,7 @@ import UIKit
 final class CameraController: NSObject, @unchecked Sendable {
     let session = AVCaptureSession()
     let frames: FrameBroadcaster
+    let orientation = OrientationMonitor()
     let store: PhotoStore
 
     private let sessionQueue = DispatchQueue(label: "camera.session")
@@ -80,6 +81,7 @@ final class CameraController: NSObject, @unchecked Sendable {
     // MARK: - Startup
 
     func start() {
+        orientation.start()
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
             guard let self else { return }
             self.sessionQueue.async {
@@ -246,7 +248,11 @@ final class CameraController: NSObject, @unchecked Sendable {
 
             applyAll()
 
-            if let p = update.point { setPointOfInterest(CGPoint(x: clamp(p.x, 0, 1), y: clamp(p.y, 0, 1))) }
+            if let p = update.point {
+                // The remote sends a point on the upright preview; the device wants sensor coordinates.
+                let sensor = OrientationMonitor.sensorPoint(x: clamp(p.x, 0, 1), y: clamp(p.y, 0, 1), for: orientation.current)
+                setPointOfInterest(CGPoint(x: sensor.x, y: sensor.y))
+            }
         }
     }
 
@@ -329,6 +335,7 @@ final class CameraController: NSObject, @unchecked Sendable {
             s.running = session.isRunning
             s.lenses = lensInfo
             s.loupe = loupe
+            s.orientation = orientation.current.rawValue
             guard let device else { return s }
 
             let format = device.activeFormat
@@ -548,6 +555,16 @@ final class CameraController: NSObject, @unchecked Sendable {
         lock.lock()
         processors[id] = processor
         lock.unlock()
+        // Tag the photo with the phone's physical orientation (the UI is locked to portrait).
+        if let connection = photoOutput.connection(with: .video) {
+            let current = orientation.current
+            if #available(iOS 17.0, *) {
+                let angle = OrientationMonitor.rotationAngle(for: current)
+                if connection.isVideoRotationAngleSupported(angle) { connection.videoRotationAngle = angle }
+            } else if connection.isVideoOrientationSupported {
+                connection.videoOrientation = OrientationMonitor.videoOrientation(for: current)
+            }
+        }
         photoOutput.capturePhoto(with: settings, delegate: processor)
     }
 
@@ -600,8 +617,10 @@ extension CameraController: AVCaptureVideoDataOutputSampleBufferDelegate {
             let h = extent.height / loupe
             image = image.cropped(to: CGRect(x: extent.midX - w / 2, y: extent.midY - h / 2, width: w, height: h))
         }
+        // Sensor frames are landscape — rotate them to match how the phone is standing.
+        image = image.oriented(OrientationMonitor.imageOrientation(for: orientation.current))
         image = image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
-        let scale = min(1, 1280 / image.extent.width)
+        let scale = min(1, 1280 / max(image.extent.width, image.extent.height))
         if scale < 1 {
             image = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         }

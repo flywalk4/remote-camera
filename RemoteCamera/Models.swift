@@ -52,6 +52,8 @@ struct CameraState: Codable {
     var manualWBSupported = false
 
     var loupe = 1.0
+    /// Physical orientation of the phone: portrait, portraitUpsideDown, landscapeLeft, landscapeRight.
+    var orientation = "portrait"
     var formats: [String] = []  // heif, jpeg, raw, proraw
     var capture = CaptureStatus()
     var photoCount = 0
