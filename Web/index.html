@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,17 +12,17 @@
       <img id="preview" alt="">
       <div class="grid-overlay" id="gridOverlay"></div>
       <div class="countdown" id="countdown"></div>
-      <div class="placeholder" id="placeholder">Подключение к iPhone…</div>
+      <div class="placeholder" id="placeholder">Connecting to iPhone…</div>
     </div>
 
     <div class="hud top">
-      <span id="conn" class="pill">нет связи</span>
+      <span id="conn" class="pill">not connected</span>
       <span id="loupeBadge" class="pill accent" hidden></span>
       <span id="seriesBadge" class="pill rec" hidden></span>
     </div>
 
     <div class="hud bottom">
-      <canvas id="histogram" width="256" height="80" title="Гистограмма яркости превью (H)"></canvas>
+      <canvas id="histogram" width="256" height="80" title="Preview brightness histogram (H)"></canvas>
       <div class="readout" id="readout"></div>
     </div>
 
@@ -31,111 +31,111 @@
 
   <aside class="panel">
     <section class="shoot">
-      <button id="shootBtn" class="shutter" title="Снять (Пробел)" disabled></button>
-      <button id="cancelBtn" class="ghost" hidden>Стоп <kbd>Esc</kbd></button>
+      <button id="shootBtn" class="shutter" title="Shoot (Space)" disabled></button>
+      <button id="cancelBtn" class="ghost" hidden>Stop <kbd>Esc</kbd></button>
     </section>
 
     <section>
-      <h3>Объектив</h3>
+      <h3>Lens</h3>
       <div class="segmented" id="lenses"></div>
       <div class="row">
-        <label for="zoom">Зум</label><output id="zoomOut"></output>
+        <label for="zoom">Zoom</label><output id="zoomOut"></output>
       </div>
       <input type="range" id="zoom" min="0" max="1000" value="0">
     </section>
 
     <section>
-      <h3>Экспозиция
+      <h3>Exposure
         <span class="segmented small" id="expMode">
-          <button data-v="auto">Авто</button><button data-v="manual">Ручная</button>
+          <button data-v="auto">Auto</button><button data-v="manual">Manual</button>
         </span>
       </h3>
       <div>
-        <p class="hint" data-show="exp-auto">Сейчас ISO и выдержку подбирает iPhone. Сдвиньте любой слайдер — экспозиция перейдёт в ручной режим.</p>
+        <p class="hint" data-show="exp-auto">ISO and shutter are currently chosen by the iPhone. Move either slider to switch exposure to manual.</p>
         <div class="row"><label for="iso">ISO</label><output id="isoOut"></output></div>
         <input type="range" id="iso" min="0" max="1000">
         <div class="chips" id="isoChips"></div>
-        <div class="row"><label for="shutter">Выдержка</label><output id="shutterOut"></output></div>
+        <div class="row"><label for="shutter">Shutter</label><output id="shutterOut"></output></div>
         <input type="range" id="shutter" min="0" max="1000">
         <div class="chips" id="shutterChips"></div>
       </div>
       <div data-dim="exp-manual">
-        <div class="row"><label for="bias">Коррекция EV <span class="muted">(только в авто)</span></label><output id="biasOut"></output></div>
+        <div class="row"><label for="bias">EV compensation <span class="muted">(auto only)</span></label><output id="biasOut"></output></div>
         <input type="range" id="bias" min="-8" max="8" step="0.1" value="0">
-        <p class="hint">Клик по превью — точка замера экспозиции и фокуса.</p>
+        <p class="hint">Click the preview to set the metering and focus point.</p>
       </div>
-      <div class="meter"><span>Экспонометр</span><div class="meter-bar"><i id="meterNeedle"></i></div><output id="meterOut"></output></div>
+      <div class="meter"><span>Meter</span><div class="meter-bar"><i id="meterNeedle"></i></div><output id="meterOut"></output></div>
     </section>
 
     <section>
-      <h3>Фокус
+      <h3>Focus
         <span class="segmented small" id="focusMode">
-          <button data-v="auto">Авто</button><button data-v="manual">Ручной</button>
+          <button data-v="auto">Auto</button><button data-v="manual">Manual</button>
         </span>
       </h3>
-      <div class="row"><label for="focus">Положение линзы</label><output id="focusOut"></output></div>
+      <div class="row"><label for="focus">Lens position</label><output id="focusOut"></output></div>
       <input type="range" id="focus" min="0" max="1" step="0.001">
       <div class="chips">
         <button id="focusNudgeDown">−0.005</button>
         <button id="focusNudgeUp">+0.005</button>
-        <button id="focusInf" title="Дальний край диапазона">∞</button>
+        <button id="focusInf" title="Far end of the range">∞</button>
       </div>
-      <div class="row"><label>Лупа</label><span class="hint">для точной фокусировки <kbd>L</kbd></span></div>
+      <div class="row"><label>Loupe</label><span class="hint">for precise focusing <kbd>L</kbd></span></div>
       <div class="segmented" id="loupe">
         <button data-v="1">1×</button><button data-v="2">2×</button><button data-v="4">4×</button><button data-v="8">8×</button>
       </div>
     </section>
 
     <section>
-      <h3>Баланс белого
+      <h3>White balance
         <span class="segmented small" id="wbMode">
-          <button data-v="auto">Авто</button><button data-v="manual">Ручной</button>
+          <button data-v="auto">Auto</button><button data-v="manual">Manual</button>
         </span>
       </h3>
-      <div class="row"><label for="temp">Температура</label><output id="tempOut"></output></div>
+      <div class="row"><label for="temp">Temperature</label><output id="tempOut"></output></div>
       <input type="range" id="temp" min="2000" max="10000" step="50">
-      <div class="row"><label for="tint">Оттенок</label><output id="tintOut"></output></div>
+      <div class="row"><label for="tint">Tint</label><output id="tintOut"></output></div>
       <input type="range" id="tint" min="-150" max="150" step="1">
     </section>
 
     <section>
-      <h3>Съёмка</h3>
+      <h3>Capture</h3>
       <div class="field">
-        <label for="format">Формат</label>
+        <label for="format">Format</label>
         <select id="format"></select>
       </div>
       <div class="field">
-        <label for="delay">Задержка перед съёмкой</label>
+        <label for="delay">Delay before shooting</label>
         <select id="delay">
-          <option value="0">нет</option>
-          <option value="2" selected>2 с</option>
-          <option value="5">5 с</option>
-          <option value="10">10 с</option>
+          <option value="0">none</option>
+          <option value="2" selected>2 s</option>
+          <option value="5">5 s</option>
+          <option value="10">10 s</option>
         </select>
       </div>
       <div class="field two">
         <div>
-          <label for="count">Кадров в серии</label>
+          <label for="count">Frames in series</label>
           <input type="number" id="count" min="1" max="9999" value="1">
         </div>
         <div>
-          <label for="interval">Интервал, с</label>
+          <label for="interval">Interval, s</label>
           <input type="number" id="interval" min="0" step="0.5" value="0">
         </div>
       </div>
-      <label class="check"><input type="checkbox" id="saveToPhotos"> Дублировать в «Фото» на iPhone</label>
+      <label class="check"><input type="checkbox" id="saveToPhotos"> Also save to Photos on the iPhone</label>
     </section>
 
     <section>
-      <h3>Вид</h3>
-      <label class="check"><input type="checkbox" id="grid"> Сетка <kbd>G</kbd></label>
-      <label class="check"><input type="checkbox" id="night"> Красный ночной режим <kbd>N</kbd></label>
-      <button id="moonPreset" class="wide">🌕 Пресет «Луна»</button>
+      <h3>View</h3>
+      <label class="check"><input type="checkbox" id="grid"> Grid <kbd>G</kbd></label>
+      <label class="check"><input type="checkbox" id="night"> Red night mode <kbd>N</kbd></label>
+      <button id="moonPreset" class="wide">🌕 Moon preset</button>
     </section>
 
     <section>
-      <h3>Снимки <span class="muted" id="photoCount"></span>
-        <button id="downloadAll" class="link">скачать все</button>
+      <h3>Photos <span class="muted" id="photoCount"></span>
+        <button id="downloadAll" class="link">download all</button>
       </h3>
       <div id="gallery" class="gallery"></div>
     </section>

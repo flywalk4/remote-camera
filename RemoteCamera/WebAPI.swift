@@ -1,16 +1,16 @@
 import Foundation
 
-/// Маршруты HTTP API, которыми пользуется веб-пульт на Mac.
+/// HTTP API routes used by the web remote on the Mac.
 ///
-///   GET  /                    веб-пульт (файлы из папки Web)
-///   GET  /stream              MJPEG-превью
-///   GET  /api/state           состояние камеры
-///   POST /api/settings        изменить настройки (SettingsUpdate)
-///   POST /api/capture         снять фото / серию (CaptureRequest)
-///   POST /api/cancel          прервать серию
-///   GET  /api/photos          список снимков
-///   GET  /photos/<имя>        скачать снимок (?download=1 — как вложение)
-///   POST /api/photos/delete   удалить снимок {"name": "..."}
+///   GET  /                    web remote (files from the Web folder)
+///   GET  /stream              MJPEG preview
+///   GET  /api/state           camera state
+///   POST /api/settings        change settings (SettingsUpdate)
+///   POST /api/capture         take a photo / series (CaptureRequest)
+///   POST /api/cancel          cancel a series
+///   GET  /api/photos          list photos
+///   GET  /photos/<name>       download a photo (?download=1 — as attachment)
+///   POST /api/photos/delete   delete a photo {"name": "..."}
 struct WebAPI {
     let camera: CameraController
     let store: PhotoStore
@@ -38,7 +38,7 @@ struct WebAPI {
 
         case ("POST", "/api/settings"):
             guard let update = try? JSONDecoder().decode(SettingsUpdate.self, from: request.body) else {
-                return .response(.error("Неверный JSON"))
+                return .response(.error("Invalid JSON"))
             }
             camera.apply(update)
             return .response(.json(["ok": true]))
@@ -60,7 +60,7 @@ struct WebAPI {
         case ("POST", "/api/photos/delete"):
             struct Body: Decodable { let name: String }
             guard let body = try? JSONDecoder().decode(Body.self, from: request.body), store.delete(body.name) else {
-                return .response(.error("Файл не найден", status: 404))
+                return .response(.error("File not found", status: 404))
             }
             return .response(.json(["ok": true]))
 
@@ -75,14 +75,14 @@ struct WebAPI {
     private func staticFile(_ name: String, type: String) -> HTTPResponse {
         guard let url = Bundle.main.url(forResource: name, withExtension: nil, subdirectory: "Web"),
               let data = try? Data(contentsOf: url) else {
-            return .error("Нет файла \(name) в сборке", status: 404)
+            return .error("File \(name) is missing from the app bundle", status: 404)
         }
         return HTTPResponse(contentType: type, body: data)
     }
 
     private func photo(named name: String, download: Bool) -> HTTPResponse {
         guard let url = store.url(for: name), let data = try? Data(contentsOf: url) else {
-            return .error("Файл не найден", status: 404)
+            return .error("File not found", status: 404)
         }
         let type: String
         switch url.pathExtension.lowercased() {

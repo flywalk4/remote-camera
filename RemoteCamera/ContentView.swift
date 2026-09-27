@@ -22,7 +22,7 @@ struct ContentView: View {
                     Button {
                         withAnimation { showControls.toggle() }
                     } label: {
-                        Label("Настройки", systemImage: "slider.horizontal.3")
+                        Label("Settings", systemImage: "slider.horizontal.3")
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
                             .background(showControls ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.ultraThinMaterial), in: Capsule())
@@ -41,7 +41,7 @@ struct ContentView: View {
                             .frame(width: 68, height: 68)
                             .overlay(Circle().stroke(.gray, lineWidth: 4).padding(-6))
                     }
-                    .accessibilityLabel("Снять")
+                    .accessibilityLabel("Take photo")
                 }
                 .padding(.bottom, 12)
             }
@@ -51,7 +51,7 @@ struct ContentView: View {
                 Color.black
                     .ignoresSafeArea()
                     .overlay(
-                        Text("Нажмите, чтобы включить экран")
+                        Text("Tap to turn the screen back on")
                             .font(.footnote)
                             .foregroundStyle(Color(white: 0.15))
                     )
@@ -65,11 +65,11 @@ struct ContentView: View {
 
     private var infoCard: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Откройте пульт на Mac:")
+            Text("Open the remote on your Mac:")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             if model.urls.isEmpty {
-                Text("Нет сети. Подключитесь к Wi-Fi или включите «Режим модема».")
+                Text("No network. Join Wi-Fi or turn on Personal Hotspot.")
                     .font(.subheadline)
             }
             ForEach(model.urls, id: \.self) { url in
@@ -87,7 +87,7 @@ struct ContentView: View {
     }
 }
 
-/// Превью камеры на экране iPhone.
+/// Camera preview on the iPhone screen.
 struct CameraPreview: UIViewRepresentable {
     let session: AVCaptureSession
 

@@ -1,7 +1,7 @@
 import Foundation
 
-/// Снимки хранятся в Documents/Photos приложения. Они видны в приложении «Файлы»
-/// (На iPhone → Remote Camera) и доступны пульту для скачивания.
+/// Photos are stored in the app's Documents/Photos folder. They are visible in the Files app
+/// (On My iPhone → Remote Camera) and can be downloaded from the remote.
 final class PhotoStore: @unchecked Sendable {
     struct Item: Codable {
         let name: String
@@ -53,7 +53,7 @@ final class PhotoStore: @unchecked Sendable {
         .sorted { $0.date > $1.date }
     }
 
-    /// Путь к файлу по имени из запроса; nil, если имя подозрительное или файла нет.
+    /// File URL for a name from a request; nil if the name is suspicious or the file does not exist.
     func url(for name: String) -> URL? {
         guard !name.isEmpty, !name.contains("/"), !name.hasPrefix(".") else { return nil }
         let url = directory.appendingPathComponent(name)

@@ -31,12 +31,12 @@ struct HTTPResponse {
 
 enum HTTPResult {
     case response(HTTPResponse)
-    /// Бесконечный поток JPEG-кадров (multipart/x-mixed-replace) для превью.
+    /// Endless stream of JPEG frames (multipart/x-mixed-replace) for the preview.
     case mjpeg
 }
 
-/// Минимальный HTTP/1.1-сервер: одно соединение — один запрос (Connection: close),
-/// кроме MJPEG-потока, который остаётся открытым.
+/// Minimal HTTP/1.1 server: one request per connection (Connection: close),
+/// except for the MJPEG stream, which stays open.
 final class HTTPServer: @unchecked Sendable {
     private let queue = DispatchQueue(label: "http.server")
     private var listener: NWListener?
@@ -52,13 +52,13 @@ final class HTTPServer: @unchecked Sendable {
         let params = NWParameters.tcp
         params.allowLocalEndpointReuse = true
         let listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: port)!)
-        // Bonjour: пульт доступен ещё и как «Remote Camera» в сети.
+        // Bonjour: the remote is also advertised as "Remote Camera" on the network.
         listener.service = NWListener.Service(name: "Remote Camera", type: "_http._tcp")
         listener.newConnectionHandler = { [weak self] connection in
             self?.accept(connection)
         }
         listener.stateUpdateHandler = { [weak self] state in
-            // После сворачивания приложения iOS может закрыть сокет — перезапускаем.
+            // iOS may close the socket after the app is backgrounded — restart it.
             if case .failed = state {
                 self?.listener?.cancel()
                 self?.queue.asyncAfter(deadline: .now() + 1) { try? self?.start(port: port) }
@@ -152,8 +152,8 @@ final class HTTPServer: @unchecked Sendable {
     }
 }
 
-/// Рассылает JPEG-кадры превью всем подключённым пультам.
-/// Если клиент не успевает принимать, кадры для него пропускаются.
+/// Sends preview JPEG frames to every connected remote.
+/// Frames are skipped for a client that cannot keep up.
 final class FrameBroadcaster: @unchecked Sendable {
     private let lock = NSLock()
     private var clients: [ObjectIdentifier: Client] = [:]

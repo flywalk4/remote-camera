@@ -1,10 +1,10 @@
 import Foundation
 
-/// Объектив, доступный для выбора (ультраширокий, широкий, телевик).
+/// A selectable lens (ultra wide, wide, telephoto).
 struct LensInfo: Codable {
     let id: String
     let name: String
-    /// Кратность относительно основного (широкого) объектива: 0.5, 1, 3, 5…
+    /// Magnification relative to the main (wide) lens: 0.5, 1, 3, 5…
     let factor: Double
 }
 
@@ -16,7 +16,7 @@ struct CaptureStatus: Codable {
     var lastError: String?
 }
 
-/// Полное состояние камеры, которое пульт получает через GET /api/state.
+/// Full camera state that the remote fetches via GET /api/state.
 struct CameraState: Codable {
     var running = false
     var error: String?
@@ -33,17 +33,17 @@ struct CameraState: Codable {
     var iso = 0.0
     var minISO = 0.0
     var maxISO = 0.0
-    var shutter = 0.0           // секунды
+    var shutter = 0.0           // seconds
     var minShutter = 0.0
     var maxShutter = 0.0
     var bias = 0.0
     var minBias = 0.0
     var maxBias = 0.0
-    /// Отклонение от «правильной» экспозиции по мнению экспонометра (EV).
+    /// Deviation from the "correct" exposure according to the meter (EV).
     var exposureOffset = 0.0
 
     var focusMode = "auto"      // auto | manual
-    var lensPosition = 0.0      // 0 — близко, 1 — далеко
+    var lensPosition = 0.0      // 0 = near, 1 = far
     var manualFocusSupported = false
 
     var wbMode = "auto"         // auto | manual
@@ -56,12 +56,12 @@ struct CameraState: Codable {
     var capture = CaptureStatus()
     var photoCount = 0
 
-    var battery = -1.0          // 0…1, -1 если неизвестно
+    var battery = -1.0          // 0…1, -1 if unknown
     var charging = false
     var thermal = "nominal"
 }
 
-/// Изменение настроек от пульта (POST /api/settings). Все поля необязательные.
+/// Settings change from the remote (POST /api/settings). All fields are optional.
 struct SettingsUpdate: Decodable {
     struct Point: Decodable { let x: Double; let y: Double }
 
@@ -80,7 +80,7 @@ struct SettingsUpdate: Decodable {
     var loupe: Double?
 }
 
-/// Запрос на съёмку (POST /api/capture).
+/// Capture request (POST /api/capture).
 struct CaptureRequest: Decodable {
     var format = "heif"
     var count = 1

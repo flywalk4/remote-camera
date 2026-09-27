@@ -1,4 +1,4 @@
-# Генерация Xcode-проекта:  brew install xcodegen && xcodegen
+# Generate the Xcode project:  brew install xcodegen && xcodegen
 name: RemoteCamera
 options:
   bundleIdPrefix: com.example
@@ -20,11 +20,11 @@ targets:
         buildPhase: resources
     settings:
       base:
-        # Замените на свой уникальный идентификатор, если Xcode ругается при подписи.
+        # Replace with your own unique identifier if Xcode complains during signing.
         PRODUCT_BUNDLE_IDENTIFIER: com.example.remotecamera
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
-        # Команду (Apple ID) удобнее выбрать в Xcode: Signing & Capabilities → Team.
+        # Pick your team (Apple ID) in Xcode: Signing & Capabilities → Team.
         DEVELOPMENT_TEAM: ""
     info:
       path: RemoteCamera/Info.plist
@@ -37,9 +37,9 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        NSCameraUsageDescription: Камера нужна, чтобы снимать и показывать превью на пульте Mac.
-        NSPhotoLibraryAddUsageDescription: Чтобы сохранять снимки в «Фото», если включена эта опция.
-        NSLocalNetworkUsageDescription: Пульт на Mac подключается к iPhone по локальной сети.
+        NSCameraUsageDescription: The camera is used to take photos and show a live preview on the Mac remote.
+        NSPhotoLibraryAddUsageDescription: Used to save photos to the Photos library when that option is enabled.
+        NSLocalNetworkUsageDescription: The Mac remote connects to the iPhone over the local network.
         NSBonjourServices:
           - _http._tcp
         UIFileSharingEnabled: true

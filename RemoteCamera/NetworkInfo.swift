@@ -1,7 +1,7 @@
 import Foundation
 
 enum NetworkInfo {
-    /// IPv4-адреса iPhone: Wi-Fi (en0) и режим модема (bridge*, 172.20.10.1).
+    /// IPv4 addresses of the iPhone: Wi-Fi (en0) and Personal Hotspot (bridge*, 172.20.10.1).
     static func addresses() -> [String] {
         var result: [String] = []
         var ifaddr: UnsafeMutablePointer<ifaddrs>?

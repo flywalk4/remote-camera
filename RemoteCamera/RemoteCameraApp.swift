@@ -23,7 +23,7 @@ final class AppModel: ObservableObject {
     private var server: HTTPServer?
 
     @Published var addresses: [String] = []
-    /// Текущее состояние камеры — для панели настроек на экране iPhone.
+    /// Current camera state — for the settings panel on the iPhone screen.
     @Published var cameraState: CameraState?
     @Published var serverError: String?
     @Published var dimmed = false {
@@ -44,7 +44,7 @@ final class AppModel: ObservableObject {
         do {
             try server.start(port: Self.port)
         } catch {
-            serverError = "Сервер не запустился: \(error.localizedDescription)"
+            serverError = "Server failed to start: \(error.localizedDescription)"
         }
         self.server = server
         camera.start()
@@ -69,8 +69,8 @@ final class AppModel: ObservableObject {
         )
     }
 
-    /// «Ночной режим» экрана: чёрный экран и минимальная яркость —
-    /// не засвечивает глаза и кадр, экономит батарею.
+    /// Screen "night mode": black screen and minimum brightness —
+    /// keeps your eyes dark-adapted, doesn't light up the scene, saves battery.
     private func applyBrightness() {
         if dimmed {
             savedBrightness = UIScreen.main.brightness
@@ -82,7 +82,7 @@ final class AppModel: ObservableObject {
 
     private func pollCamera() {
         let camera = self.camera
-        // state() ждёт очередь камеры — не блокируем главный поток.
+        // state() waits on the camera queue — don't block the main thread.
         DispatchQueue.global(qos: .userInitiated).async {
             let state = camera.state()
             DispatchQueue.main.async { [weak self] in self?.cameraState = state }

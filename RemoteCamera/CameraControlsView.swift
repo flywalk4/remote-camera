@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// Панель ручных настроек прямо на экране iPhone: объектив, ISO, выдержка, фокус.
-/// Те же настройки доступны и в пульте на Mac — они синхронизируются.
+/// Manual settings panel on the iPhone screen: lens, ISO, shutter speed, focus.
+/// The same settings are available in the Mac remote — they stay in sync.
 struct CameraControlsView: View {
     @EnvironmentObject private var model: AppModel
 
-    // Значения слайдеров, пока палец на слайдере (иначе опрос состояния сбивает их).
+    // Slider values while a finger is on the slider (otherwise state polling would overwrite them).
     @State private var editing: String?
     @State private var isoPos = 0.0
     @State private var shutterPos = 0.0
@@ -15,7 +15,7 @@ struct CameraControlsView: View {
         if let s = model.cameraState, s.maxISO > 0 {
             VStack(alignment: .leading, spacing: 10) {
                 if s.lenses.count > 1 {
-                    Picker("Объектив", selection: Binding(
+                    Picker("Lens", selection: Binding(
                         get: { s.lens },
                         set: { id in model.apply { $0.lens = id } }
                     )) {
@@ -27,7 +27,7 @@ struct CameraControlsView: View {
                 }
 
                 HStack {
-                    Text("Экспозиция").font(.subheadline.weight(.semibold))
+                    Text("Exposure").font(.subheadline.weight(.semibold))
                     Spacer()
                     modePicker(s.exposureMode) { mode in model.apply { $0.exposureMode = mode } }
                 }
@@ -45,7 +45,7 @@ struct CameraControlsView: View {
                 }
 
                 sliderRow(
-                    title: "Выдержка",
+                    title: "Shutter",
                     value: editing == "shutter" ? Self.fromLog(shutterPos, s.minShutter, s.maxShutter) : s.shutter,
                     text: Self.shutterText,
                     position: $shutterPos,
@@ -57,14 +57,14 @@ struct CameraControlsView: View {
                 }
 
                 HStack {
-                    Text("Фокус").font(.subheadline.weight(.semibold))
+                    Text("Focus").font(.subheadline.weight(.semibold))
                     Spacer()
                     modePicker(s.focusMode) { mode in model.apply { $0.focusMode = mode } }
                         .disabled(!s.manualFocusSupported)
                 }
 
                 sliderRow(
-                    title: "Линза",
+                    title: "Lens position",
                     value: editing == "focus" ? focusPos : s.lensPosition,
                     text: { String(format: "%.3f", $0) },
                     position: $focusPos,
@@ -76,7 +76,7 @@ struct CameraControlsView: View {
                 .disabled(!s.manualFocusSupported)
 
                 if s.exposureMode == "auto" {
-                    Text("Сейчас ISO и выдержку подбирает iPhone. Сдвиньте слайдер — включится ручной режим.")
+                    Text("ISO and shutter are currently chosen by the iPhone. Move a slider to switch to manual.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -84,7 +84,7 @@ struct CameraControlsView: View {
             .padding(14)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
         } else {
-            Text(model.cameraState?.error ?? "Камера запускается…")
+            Text(model.cameraState?.error ?? "Starting camera…")
                 .font(.subheadline)
                 .padding(14)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
@@ -93,8 +93,8 @@ struct CameraControlsView: View {
 
     private func modePicker(_ mode: String, onChange: @escaping (String) -> Void) -> some View {
         Picker("", selection: Binding(get: { mode }, set: onChange)) {
-            Text("Авто").tag("auto")
-            Text("Ручн.").tag("manual")
+            Text("Auto").tag("auto")
+            Text("Manual").tag("manual")
         }
         .pickerStyle(.segmented)
         .frame(width: 140)
@@ -136,7 +136,7 @@ struct CameraControlsView: View {
         }
     }
 
-    // Логарифмическая шкала: равные шаги слайдера = равные ступени экспозиции.
+    // Logarithmic scale: equal slider steps = equal exposure stops.
     static func toLog(_ value: Double, _ min: Double, _ max: Double) -> Double {
         guard min > 0, max > min, value > 0 else { return 0 }
         return clamp(log(value / min) / log(max / min), 0, 1)
@@ -149,7 +149,7 @@ struct CameraControlsView: View {
 
     static func shutterText(_ seconds: Double) -> String {
         guard seconds > 0 else { return "—" }
-        if seconds >= 0.95 { return String(format: "%.1f с", seconds) }
+        if seconds >= 0.95 { return String(format: "%.1f s", seconds) }
         return "1/\(Int((1 / seconds).rounded()))"
     }
 

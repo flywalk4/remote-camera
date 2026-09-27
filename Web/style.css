@@ -23,7 +23,7 @@ html, body {
 }
 body { display: flex; overflow: hidden; }
 
-/* Красный ночной режим: оставляет только красный канал — не сбивает темновую адаптацию глаз. */
+/* Red night mode: keeps only the red channel so it doesn't ruin your dark adaptation. */
 body.night::after {
   content: "";
   position: fixed;
@@ -62,7 +62,7 @@ kbd {
 .muted { color: var(--muted); font-weight: 400; }
 .hint { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
 
-/* ---------- Превью ---------- */
+/* ---------- Preview ---------- */
 
 .stage {
   position: relative;
@@ -162,7 +162,7 @@ kbd {
 }
 .toast.show { opacity: 1; }
 
-/* ---------- Панель ---------- */
+/* ---------- Panel ---------- */
 
 .panel {
   width: 330px;
@@ -205,7 +205,7 @@ kbd {
 .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
 .chips button { padding: 2px 7px; font-size: 12px; border-radius: 6px; }
 
-/* ISO и выдержка видны всегда; в авто-режиме показывают значения, выбранные iPhone. */
+/* ISO and shutter are always visible; in auto mode they show the values chosen by the iPhone. */
 body[data-exp=manual] [data-show=exp-auto] { display: none; }
 body[data-exp=manual] [data-dim=exp-manual] { opacity: .4; }
 

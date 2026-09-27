@@ -1,6 +1,6 @@
 'use strict';
 
-// Веб-пульт: работает в браузере на Mac, общается с приложением на iPhone по HTTP.
+// Web remote: runs in a browser on the Mac and talks to the iPhone app over HTTP.
 
 const $ = (id) => document.getElementById(id);
 const preview = $('preview');
@@ -9,9 +9,9 @@ let state = null;
 let online = false;
 let lastPhotoCount = -1;
 let lastCaptureError = null;
-const touched = {}; // id контрола → время последнего изменения пользователем
+const touched = {}; // control id → time of the user's last change
 
-// ---------- Утилиты ----------
+// ---------- Utilities ----------
 
 const LOG_STEPS = 1000;
 const toLog = (v, min, max) => min * Math.pow(max / min, v / LOG_STEPS);
@@ -19,13 +19,13 @@ const fromLog = (x, min, max) => (LOG_STEPS * Math.log(x / min)) / Math.log(max 
 
 function fmtShutter(s) {
   if (!s) return '—';
-  if (s >= 0.95) return `${s.toFixed(s < 10 ? 1 : 0)} с`;
+  if (s >= 0.95) return `${s.toFixed(s < 10 ? 1 : 0)} s`;
   return `1/${Math.round(1 / s)}`;
 }
 
 function fmtBytes(n) {
-  if (n < 1024 * 1024) return `${Math.round(n / 1024)} КБ`;
-  return `${(n / 1024 / 1024).toFixed(1)} МБ`;
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function isTouched(id) {
@@ -52,7 +52,7 @@ async function api(path, body) {
   return data;
 }
 
-// Изменения настроек копим и отправляем не чаще раза в 80 мс (при перетаскивании слайдеров).
+// Settings changes are batched and sent at most every 80 ms (while dragging sliders).
 let pending = null;
 let flushTimer = null;
 function setCamera(patch) {
@@ -65,12 +65,12 @@ function setCamera(patch) {
     try {
       await api('/api/settings', body);
     } catch (e) {
-      toast(`Ошибка: ${e.message}`);
+      toast(`Error: ${e.message}`);
     }
   }, 80);
 }
 
-// ---------- Опрос состояния ----------
+// ---------- State polling ----------
 
 async function poll() {
   try {
@@ -86,7 +86,7 @@ async function poll() {
 function setOnline(value) {
   if (value === online) return;
   online = value;
-  $('conn').textContent = value ? 'iPhone подключён' : 'нет связи с iPhone';
+  $('conn').textContent = value ? 'iPhone connected' : 'iPhone not reachable';
   $('conn').classList.toggle('ok', value);
   $('shootBtn').disabled = !value;
   if (value) startStream();
@@ -101,7 +101,7 @@ preview.addEventListener('error', () => {
   setTimeout(() => online && startStream(), 2000);
 });
 
-// ---------- Отрисовка состояния ----------
+// ---------- Rendering state ----------
 
 function render() {
   const s = state;
@@ -113,7 +113,7 @@ function render() {
   if (!isTouched('zoom') && s.maxZoom > s.minZoom) zoom.value = fromLog(s.zoom, s.minZoom, s.maxZoom);
   $('zoomOut').textContent = `${s.zoom.toFixed(1)}×`;
 
-  // Экспозиция
+  // Exposure
   if (!isTouched('expMode')) {
     setSegment('expMode', s.exposureMode);
     document.body.dataset.exp = s.exposureMode;
@@ -134,7 +134,7 @@ function render() {
   $('meterNeedle').style.left = `${((offset + 3) / 6) * 100}%`;
   $('meterOut').textContent = `${s.exposureOffset > 0 ? '+' : ''}${s.exposureOffset.toFixed(1)}`;
 
-  // Фокус
+  // Focus
   setSegment('focusMode', s.focusMode);
   $('focusMode').querySelector('[data-v=manual]').disabled = !s.manualFocusSupported;
   if (!isTouched('focus')) $('focus').value = s.lensPosition;
@@ -144,9 +144,9 @@ function render() {
     setSegment('loupe', String(s.loupe));
   }
   $('loupeBadge').hidden = s.loupe <= 1;
-  $('loupeBadge').textContent = `Лупа ${s.loupe}×`;
+  $('loupeBadge').textContent = `Loupe ${s.loupe}×`;
 
-  // Баланс белого
+  // White balance
   setSegment('wbMode', s.wbMode);
   $('wbMode').querySelector('[data-v=manual]').disabled = !s.manualWBSupported;
   if (!isTouched('temp')) $('temp').value = s.temperature;
@@ -162,13 +162,13 @@ function render() {
     lens ? `${lens.name} ${lens.factor}×` : '',
     `ISO ${Math.round(s.iso)}`,
     fmtShutter(s.shutter),
-    `фокус ${s.lensPosition.toFixed(3)}`,
+    `focus ${s.lensPosition.toFixed(3)}`,
     `${Math.round(s.temperature)} K`,
   ].filter(Boolean).join(' · ');
 
   const battery = s.battery < 0 ? '' : `🔋 ${Math.round(s.battery * 100)}%${s.charging ? ' ⚡' : ''}`;
-  const thermal = { nominal: '', fair: '🌡 тёплый', serious: '🌡 перегрев!', critical: '🌡 критический перегрев!' }[s.thermal];
-  $('device').textContent = [battery, thermal, s.resolution && `макс. ${s.resolution}`].filter(Boolean).join(' · ');
+  const thermal = { nominal: '', fair: '🌡 warm', serious: '🌡 overheating!', critical: '🌡 critical overheating!' }[s.thermal];
+  $('device').textContent = [battery, thermal, s.resolution && `max ${s.resolution}`].filter(Boolean).join(' · ');
 
   if (s.photoCount !== lastPhotoCount) {
     lastPhotoCount = s.photoCount;
@@ -228,14 +228,14 @@ function renderCapture(c) {
   $('shootBtn').classList.toggle('busy', c.busy);
   const badge = $('seriesBadge');
   badge.hidden = !c.busy;
-  badge.textContent = c.total > 1 ? `● Серия ${c.done}/${c.total}` : '● Съёмка';
+  badge.textContent = c.total > 1 ? `● Series ${c.done}/${c.total}` : '● Capturing';
   $('countdown').textContent = c.countdown || '';
   $('countdown').hidden = !c.countdown;
   if (c.lastError && c.lastError !== lastCaptureError) toast(c.lastError);
   lastCaptureError = c.lastError;
 }
 
-// ---------- Управление ----------
+// ---------- Controls ----------
 
 function bindSlider(id, handler) {
   $(id).addEventListener('input', () => {
@@ -311,7 +311,7 @@ $('focusNudgeDown').onclick = () => nudgeFocus(-0.005);
 $('focusNudgeUp').onclick = () => nudgeFocus(0.005);
 $('focusInf').onclick = () => nudgeFocus(1);
 
-// Клик по превью — точка фокуса/замера (с учётом лупы).
+// Click on the preview sets the focus/metering point (accounting for the loupe).
 preview.addEventListener('click', (e) => {
   if (!state) return;
   const r = preview.getBoundingClientRect();
@@ -348,8 +348,8 @@ async function shoot() {
 $('shootBtn').onclick = shoot;
 $('cancelBtn').onclick = () => api('/api/cancel', {}).catch(() => {});
 
-// Пресет для Луны: самый длинный объектив, низкий ISO, короткая выдержка.
-// Луна освещена солнцем, поэтому экспозиция «дневная» (правило Looney 11).
+// Moon preset: longest lens, low ISO, short shutter.
+// The Moon is lit by the Sun, so it needs a "daylight" exposure (Looney 11 rule).
 $('moonPreset').onclick = () => {
   if (!state) return;
   const tele = [...state.lenses].sort((a, b) => b.factor - a.factor)[0];
@@ -364,13 +364,13 @@ $('moonPreset').onclick = () => {
   });
   if (state.formats.includes('raw')) $('format').value = 'raw';
   $('delay').value = '2';
-  toast('Наведите на Луну, включите лупу 4× и подстройте фокус и выдержку по гистограмме');
+  toast('Aim at the Moon, turn on the 4× loupe and fine-tune focus and shutter using the histogram');
 };
 
 $('grid').onchange = () => $('gridOverlay').classList.toggle('show', $('grid').checked);
 $('night').onchange = () => document.body.classList.toggle('night', $('night').checked);
 
-// ---------- Гистограмма ----------
+// ---------- Histogram ----------
 
 const histCanvas = $('histogram');
 const histCtx = histCanvas.getContext('2d');
@@ -394,7 +394,7 @@ function drawHistogram() {
     bins[Math.min(63, luma >> 2)]++;
     if (px[i] >= 250 || px[i + 1] >= 250 || px[i + 2] >= 250) clipped++;
   }
-  // Первый бин (чёрное небо) огромный — масштабируем по второму максимуму, иначе график плоский.
+  // The first bin (black sky) is huge — scale by the rest, otherwise the graph is flat.
   const peak = Math.max(...bins.slice(1), 1);
   const w = histCanvas.width;
   const h = histCanvas.height;
@@ -407,11 +407,11 @@ function drawHistogram() {
   const pct = (clipped / (px.length / 4)) * 100;
   histCtx.fillStyle = pct > 0.05 ? '#ff453a' : 'rgba(255,255,255,.5)';
   histCtx.font = '11px -apple-system, sans-serif';
-  histCtx.fillText(pct > 0.05 ? `пересвет ${pct.toFixed(2)}%` : 'без пересвета', 6, 13);
+  histCtx.fillText(pct > 0.05 ? `clipped ${pct.toFixed(2)}%` : 'no clipping', 6, 13);
 }
 setInterval(drawHistogram, 250);
 
-// ---------- Галерея ----------
+// ---------- Gallery ----------
 
 let photos = [];
 async function loadGallery() {
@@ -433,10 +433,10 @@ async function loadGallery() {
     row.innerHTML = `${thumb}
       <a class="name" href="/photos/${encodeURIComponent(p.name)}" target="_blank">${p.name}</a>
       <span class="muted">${fmtBytes(p.size)}</span>
-      <a class="icon" title="Скачать" href="/photos/${encodeURIComponent(p.name)}?download=1" download="${p.name}">⬇︎</a>
-      <button class="icon" title="Удалить с iPhone">✕</button>`;
+      <a class="icon" title="Download" href="/photos/${encodeURIComponent(p.name)}?download=1" download="${p.name}">⬇︎</a>
+      <button class="icon" title="Delete from iPhone">✕</button>`;
     row.querySelector('button').onclick = async () => {
-      if (!confirm(`Удалить ${p.name} с iPhone?`)) return;
+      if (!confirm(`Delete ${p.name} from the iPhone?`)) return;
       await api('/api/photos/delete', { name: p.name }).catch((e) => toast(e.message));
       loadGallery();
     };
@@ -456,9 +456,9 @@ $('downloadAll').onclick = async () => {
   }
 };
 
-// ---------- Клавиатура ----------
+// ---------- Keyboard ----------
 
-// После выбора значения снимаем фокус с поля, чтобы снова работали горячие клавиши.
+// Blur the field after a value is picked so keyboard shortcuts work again.
 for (const el of document.querySelectorAll('select, input[type=number]')) {
   el.addEventListener('change', () => el.blur());
 }

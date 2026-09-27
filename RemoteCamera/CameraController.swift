@@ -4,10 +4,10 @@ import ImageIO
 import Photos
 import UIKit
 
-/// Управление камерой: выбор объектива и все ручные настройки (ISO, выдержка,
-/// фокус, баланс белого, зум), съёмка фото/RAW и серий, превью для пульта.
+/// Camera control: lens selection and every manual setting (ISO, shutter speed,
+/// focus, white balance, zoom), photo/RAW and series capture, preview for the remote.
 ///
-/// Вся работа с AVCaptureSession идёт на `sessionQueue`.
+/// All AVCaptureSession work happens on `sessionQueue`.
 final class CameraController: NSObject, @unchecked Sendable {
     let session = AVCaptureSession()
     let frames: FrameBroadcaster
@@ -25,8 +25,8 @@ final class CameraController: NSObject, @unchecked Sendable {
     private var lensInfo: [LensInfo] = []
     private var setupError: String?
 
-    // Настройки, заданные пользователем. Хранятся отдельно от устройства, чтобы
-    // переприменять их после смены объектива (там свои диапазоны ISO/выдержки).
+    // Settings chosen by the user. Kept separately from the device so they can be
+    // re-applied after a lens switch (each lens has its own ISO/shutter ranges).
     private struct Desired {
         var manualExposure = false
         var iso = 100.0
@@ -41,18 +41,18 @@ final class CameraController: NSObject, @unchecked Sendable {
     }
     private var desired = Desired()
 
-    // Превью
+    // Preview
     private let ciContext = CIContext(options: [.cacheIntermediates: false])
     private let lock = NSLock()
     private var _loupe = 1.0
     private var lastFrameTime: CFTimeInterval = 0
 
-    // Съёмка
+    // Capture
     private var captureStatus = CaptureStatus()
     private var cancelRequested = false
     private var processors: [Int64: PhotoProcessor] = [:]
 
-    // Батарея (обновляется с главного потока — UIDevice нельзя читать из фона)
+    // Battery (updated from the main thread — UIDevice must not be read in the background)
     private var battery = (level: -1.0, charging: false)
 
     init(store: PhotoStore, frames: FrameBroadcaster) {
@@ -72,14 +72,14 @@ final class CameraController: NSObject, @unchecked Sendable {
         lock.unlock()
     }
 
-    // MARK: - Запуск
+    // MARK: - Startup
 
     func start() {
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
             guard let self else { return }
             self.sessionQueue.async {
                 guard granted else {
-                    self.setupError = "Нет доступа к камере. Разрешите его в Настройки → Remote Camera."
+                    self.setupError = "No camera access. Allow it in Settings → Remote Camera."
                     return
                 }
                 self.configureSession()
@@ -96,11 +96,11 @@ final class CameraController: NSObject, @unchecked Sendable {
         )
         lenses = discovery.devices
         guard let wide = lenses.first(where: { $0.deviceType == .builtInWideAngleCamera }) ?? lenses.first else {
-            setupError = "Задняя камера не найдена"
+            setupError = "Back camera not found"
             return
         }
 
-        // Кратность объективов считаем по углу обзора относительно основного.
+        // Lens magnification is computed from the field of view relative to the main lens.
         let wideFov = Double(wide.activeFormat.videoFieldOfView)
         lensInfo = lenses.map { dev in
             let fov = Double(dev.activeFormat.videoFieldOfView)
@@ -108,9 +108,9 @@ final class CameraController: NSObject, @unchecked Sendable {
             let rounded = (factor * 10).rounded() / 10
             let name: String
             switch dev.deviceType {
-            case .builtInUltraWideCamera: name = "Ультраширокий"
-            case .builtInTelephotoCamera: name = "Телевик"
-            default: name = "Основной"
+            case .builtInUltraWideCamera: name = "Ultra Wide"
+            case .builtInTelephotoCamera: name = "Telephoto"
+            default: name = "Wide"
             }
             return LensInfo(id: dev.uniqueID, name: name, factor: rounded)
         }
@@ -124,7 +124,7 @@ final class CameraController: NSObject, @unchecked Sendable {
                 input = newInput
             }
         } catch {
-            setupError = "Не удалось открыть камеру: \(error.localizedDescription)"
+            setupError = "Could not open the camera: \(error.localizedDescription)"
         }
         if session.canAddOutput(photoOutput) {
             session.addOutput(photoOutput)
@@ -167,7 +167,7 @@ final class CameraController: NSObject, @unchecked Sendable {
         applyAll()
     }
 
-    // MARK: - Настройки
+    // MARK: - Settings
 
     func apply(_ update: SettingsUpdate) {
         sessionQueue.async { [self] in
@@ -175,7 +175,7 @@ final class CameraController: NSObject, @unchecked Sendable {
             if let lens = update.lens { switchLens(to: lens) }
             guard let device else { return }
 
-            // Переход в ручной режим без значений — «замораживаем» текущие.
+            // Switching to manual without explicit values freezes the current ones.
             let toManualExposure = update.exposureMode == "manual" || update.iso != nil || update.shutter != nil
             if toManualExposure && !desired.manualExposure {
                 desired.iso = Double(device.iso)
@@ -210,7 +210,7 @@ final class CameraController: NSObject, @unchecked Sendable {
         }
     }
 
-    /// Применяет `desired` к текущему устройству (с учётом его диапазонов).
+    /// Applies `desired` to the current device (clamped to its ranges).
     private func applyAll() {
         guard let device else { return }
         do { try device.lockForConfiguration() } catch { return }
@@ -264,7 +264,7 @@ final class CameraController: NSObject, @unchecked Sendable {
         )
     }
 
-    /// Точка автофокуса/автоэкспозиции (координаты кадра 0…1, левый верхний угол — 0,0).
+    /// Autofocus/autoexposure point of interest (frame coordinates 0…1, top-left is 0,0).
     private func setPointOfInterest(_ point: CGPoint) {
         guard let device else { return }
         do { try device.lockForConfiguration() } catch { return }
@@ -280,7 +280,7 @@ final class CameraController: NSObject, @unchecked Sendable {
         }
     }
 
-    // MARK: - Состояние
+    // MARK: - State
 
     func state() -> CameraState {
         var s = sessionQueue.sync { () -> CameraState in
@@ -345,12 +345,12 @@ final class CameraController: NSObject, @unchecked Sendable {
         return s
     }
 
-    // MARK: - Съёмка
+    // MARK: - Capture
 
     func capture(_ request: CaptureRequest) -> String? {
         lock.lock()
         defer { lock.unlock() }
-        if captureStatus.busy { return "Съёмка уже идёт" }
+        if captureStatus.busy { return "A capture is already in progress" }
         captureStatus = CaptureStatus(busy: true, total: request.count, done: 0, countdown: Int(request.delay.rounded(.up)))
         cancelRequested = false
         if request.saveToPhotos {
@@ -377,7 +377,7 @@ final class CameraController: NSObject, @unchecked Sendable {
         lock.unlock()
     }
 
-    /// Ждёт `seconds`, проверяя отмену каждые 100 мс. Возвращает false при отмене.
+    /// Waits `seconds`, checking for cancellation every 100 ms. Returns false if cancelled.
     private func wait(_ seconds: Double) -> Bool {
         var left = seconds
         while left > 0 {
@@ -389,7 +389,7 @@ final class CameraController: NSObject, @unchecked Sendable {
     }
 
     private func runSeries(_ request: CaptureRequest) {
-        // Таймер перед первым кадром — чтобы успокоилась вибрация штатива.
+        // Delay before the first frame so the tripod stops shaking.
         var remaining = Int(request.delay.rounded(.up))
         while remaining > 0 {
             updateStatus { $0.countdown = remaining }
@@ -409,14 +409,14 @@ final class CameraController: NSObject, @unchecked Sendable {
                     semaphore.signal()
                 }
             }
-            if semaphore.wait(timeout: .now() + 60) == .timedOut { error = "Камера не ответила" }
+            if semaphore.wait(timeout: .now() + 60) == .timedOut { error = "The camera did not respond" }
             updateStatus {
                 $0.done = index + 1
                 if let error { $0.lastError = error }
             }
             if error != nil { break }
             if index < request.count - 1 {
-                // Интервал считается от начала предыдущего кадра.
+                // The interval is measured from the start of the previous frame.
                 let pause = request.interval - Date().timeIntervalSince(started)
                 if pause > 0 && !wait(pause) { break }
             }
@@ -425,7 +425,7 @@ final class CameraController: NSObject, @unchecked Sendable {
     }
 
     private func captureOne(format: String, saveToPhotos: Bool, completion: @escaping (String?) -> Void) {
-        guard session.isRunning else { completion("Камера не запущена"); return }
+        guard session.isRunning else { completion("The camera is not running"); return }
         let settings: AVCapturePhotoSettings
         let ext: String
         let raw = photoOutput.availableRawPhotoPixelFormatTypes
@@ -433,13 +433,13 @@ final class CameraController: NSObject, @unchecked Sendable {
         switch format {
         case "raw":
             guard let type = raw.first(where: { AVCapturePhotoOutput.isBayerRAWPixelFormat($0) }) else {
-                completion("RAW недоступен для этого объектива"); return
+                completion("RAW is not available for this lens"); return
             }
             settings = AVCapturePhotoSettings(rawPixelFormatType: type)
             ext = "dng"
         case "proraw":
             guard let type = raw.first(where: { AVCapturePhotoOutput.isAppleProRAWPixelFormat($0) }) else {
-                completion("ProRAW недоступен на этом iPhone"); return
+                completion("ProRAW is not available on this iPhone"); return
             }
             settings = AVCapturePhotoSettings(rawPixelFormatType: type)
             settings.maxPhotoDimensions = photoOutput.maxPhotoDimensions
@@ -447,7 +447,7 @@ final class CameraController: NSObject, @unchecked Sendable {
         case "jpeg":
             settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
             settings.maxPhotoDimensions = photoOutput.maxPhotoDimensions
-            // В ручном режиме — минимум «умной» обработки, чтобы кадр соответствовал настройкам.
+            // In manual mode use minimal "smart" processing so the frame matches the settings.
             settings.photoQualityPrioritization = desired.manualExposure ? .speed : .quality
             ext = "jpg"
         default:
@@ -469,7 +469,7 @@ final class CameraController: NSObject, @unchecked Sendable {
             self.processors[id] = nil
             self.lock.unlock()
             guard let data else {
-                completion(error ?? "Пустой кадр")
+                completion(error ?? "Empty frame")
                 return
             }
             do {
@@ -477,7 +477,7 @@ final class CameraController: NSObject, @unchecked Sendable {
                 if saveToPhotos { Self.saveToLibrary(data) }
                 completion(nil)
             } catch {
-                completion("Не удалось сохранить: \(error.localizedDescription)")
+                completion("Could not save: \(error.localizedDescription)")
             }
         }
         lock.lock()
@@ -493,7 +493,7 @@ final class CameraController: NSObject, @unchecked Sendable {
     }
 }
 
-// MARK: - Превью для пульта (MJPEG)
+// MARK: - Preview for the remote (MJPEG)
 
 extension CameraController: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
@@ -507,7 +507,7 @@ extension CameraController: AVCaptureVideoDataOutputSampleBufferDelegate {
         let extent = image.extent
         let loupe = self.loupe
         if loupe > 1 {
-            // «Лупа»: центр кадра без уменьшения — для точной фокусировки.
+            // Loupe: the center of the frame without downscaling — for precise focusing.
             let w = extent.width / loupe
             let h = extent.height / loupe
             image = image.cropped(to: CGRect(x: extent.midX - w / 2, y: extent.midY - h / 2, width: w, height: h))
@@ -527,7 +527,7 @@ extension CameraController: AVCaptureVideoDataOutputSampleBufferDelegate {
     }
 }
 
-/// Делегат одного снимка. Хранится в `processors`, пока съёмка не завершится.
+/// Delegate for a single shot. Kept in `processors` until the capture finishes.
 final class PhotoProcessor: NSObject, AVCapturePhotoCaptureDelegate {
     private let completion: (Data?, String?) -> Void
     private var data: Data?
