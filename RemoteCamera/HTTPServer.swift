@@ -68,6 +68,12 @@ final class HTTPServer: @unchecked Sendable {
         self.listener = listener
     }
 
+    func stop() {
+        listener?.stateUpdateHandler = nil
+        listener?.cancel()
+        listener = nil
+    }
+
     private func accept(_ connection: NWConnection) {
         connection.start(queue: queue)
         receive(connection, buffer: Data())

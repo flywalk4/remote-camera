@@ -18,17 +18,25 @@ final class PhotoStore: @unchecked Sendable {
         return f
     }()
 
-    init() {
+    /// - Parameter directory: where photos are kept; defaults to Documents/Photos (tests pass a temp folder).
+    init(directory: URL? = nil) {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        directory = documents.appendingPathComponent("Photos", isDirectory: true)
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        self.directory = directory ?? documents.appendingPathComponent("Photos", isDirectory: true)
+        try? FileManager.default.createDirectory(at: self.directory, withIntermediateDirectories: true)
     }
 
     @discardableResult
     func save(_ data: Data, ext: String) throws -> String {
         lock.lock()
-        let name = "IMG_\(formatter.string(from: Date())).\(ext)"
-        lock.unlock()
+        defer { lock.unlock() }
+        // Millisecond timestamps can repeat in a fast series — never overwrite an earlier frame.
+        let base = "IMG_\(formatter.string(from: Date()))"
+        var name = "\(base).\(ext)"
+        var suffix = 1
+        while FileManager.default.fileExists(atPath: directory.appendingPathComponent(name).path) {
+            name = "\(base)_\(suffix).\(ext)"
+            suffix += 1
+        }
         try data.write(to: directory.appendingPathComponent(name), options: .atomic)
         return name
     }

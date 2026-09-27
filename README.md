@@ -1,194 +1,220 @@
+<div align="center">
+
 # 🌕 Remote Camera
 
-An iOS app that turns an iPhone on a tripod into a camera with **full manual control
-from a MacBook**. Built primarily for photographing the Moon: ISO, shutter speed,
-manual focus with a loupe, white balance, telephoto lens, RAW, and frame series for stacking.
+**Turn your iPhone into a fully manual, remotely controlled camera — and shoot the Moon from your MacBook.**
 
-```
- iPhone on a tripod (app)                         MacBook (any browser)
-┌─────────────────────────────────┐   Wi-Fi /   ┌──────────────────────────┐
-│ AVFoundation: manual camera     │  Personal   │ http://<iPhone IP>:8080  │
-│ built-in HTTP server :8080 ─────┼──Hotspot───▶│ preview + histogram      │
-│ photos in Documents/Photos      │             │ all settings, shutter    │
-└─────────────────────────────────┘             └──────────────────────────┘
-```
+Put the phone on a tripod, open a browser on your Mac, and control ISO, shutter speed, focus,
+white balance and lenses with a live preview. No touching the phone, no shake, no Mac app to install.
 
-Nothing needs to be installed on the Mac: the remote opens in a browser and is served
-by the iPhone app itself.
+[![CI](https://github.com/flywalk4/remote-camera/actions/workflows/ci.yml/badge.svg)](https://github.com/flywalk4/remote-camera/actions/workflows/ci.yml)
+![iOS 15+](https://img.shields.io/badge/iOS-15%2B-black?logo=apple)
+![iPhone 6s and newer](https://img.shields.io/badge/iPhone-6s%20%E2%86%92%2017-blue)
+![Swift 5](https://img.shields.io/badge/Swift-5-orange?logo=swift)
+![Remote in any browser](https://img.shields.io/badge/remote-any%20browser-5b93ff)
 
-> Why a native app and not a website: Safari doesn't let web pages control ISO,
-> shutter speed or focus — only native code via AVFoundation can.
+<img src="docs/images/remote.png" alt="The Remote Camera web remote on a Mac: live Moon preview, histogram, manual ISO, shutter and focus" width="900">
 
-## Features
+</div>
 
-**Camera**
-- Lens selection: ultra wide / wide / **telephoto** (the longest one is best for the Moon) + digital zoom.
-- **Exposure**: ISO and shutter speed via sliders and quick buttons (always visible; in auto mode
-  they show the values chosen by the iPhone, and moving any slider switches to manual);
-  EV compensation and click-to-meter in auto mode; exposure meter needle.
-- **Focus**: auto (click the preview to set the focus point) or manual — lens position in 0.001 steps,
-  ± buttons, `[` `]` keys; a **2×/4×/8× loupe** shows the center of the frame at full resolution
-  for precise focusing.
-- **White balance**: auto or manual (temperature and tint).
-- Manual settings are kept when switching lenses.
+---
 
-**Capture**
-- Formats: HEIF, JPEG, **RAW (DNG)**, **Apple ProRAW** (Pro models).
-- Delay before the shot (2/5/10 s) so the tripod stops shaking after you press the button.
-- **Series**: N frames at an interval — for stacking in AutoStakkert!, Siril, RegiStax, etc.
-- Resolution: full sensor (up to 48 MP on recent models) or 12 MP, for HEIF/JPEG/ProRAW.
-- Manual settings are guarded: if iOS resets exposure/focus/white balance (e.g. around a
-  48 MP capture), the app immediately restores them, and re-applies them before and after every shot.
-- Photos are stored on the iPhone (visible in Files → On My iPhone → Remote Camera),
-  can be downloaded to the Mac from the remote, and optionally saved to Photos.
+## Why
 
-**Mac remote**
-- Live preview, histogram with clipping indicator, grid.
-- Red night mode — doesn't ruin your dark adaptation.
-- iPhone status: battery, overheating.
-- One-click "🌕 Moon preset".
+Phone cameras are great — until you point one at the Moon. Auto exposure turns it into a white blob,
+autofocus hunts in the dark sky, and every tap on the screen shakes the tripod.
 
-**The iPhone app** shows the remote's address, a preview, a shutter button and a **settings
-panel** ("Settings" button): lens, ISO, shutter speed, focus — kept in sync with the Mac remote.
-The iPhone shutter button reuses the format, resolution and delay last chosen in the remote.
-The 🌙 button blacks out the screen (minimum brightness) while the app keeps running.
+**Remote Camera** fixes all three:
 
-## Supported iPhones
+- 🎛 **Full manual control** — ISO, shutter speed, focus distance and white balance, locked exactly where you set them.
+- 🖥 **Hands off** — everything is driven from your Mac's browser, so the phone never moves.
+- 🔭 **Made for the night sky** — telephoto lens, focus loupe, clipping histogram, RAW, burst series for stacking, red night mode.
 
-Every iPhone that runs **iOS 15 or later**: iPhone 6s / 6s Plus, SE (all generations), 7, 8, X,
-XS, XR, 11, 12, 13, 14, 15, 16, 17 and their Plus/Pro/Max/mini variants. (iPhone 6 and older are
-stuck on iOS 12, which modern Xcode can no longer build for.)
+## ✨ Features
 
-The app adapts to the hardware — options the camera doesn't have are simply hidden:
-
-| Feature | Available on |
+| | |
 |---|---|
-| Manual ISO, shutter, focus, white balance, RAW (DNG) | all supported iPhones |
-| HEIF format | iPhone 7 and newer (older models shoot JPEG) |
-| Telephoto lens (2×–5×) | Plus/X/XS/Pro models with a telephoto camera |
-| Ultra wide lens | iPhone 11 and newer (except SE/XR) |
-| Apple ProRAW | iPhone 12 Pro and newer Pro models |
-| 48 MP capture + Resolution option | iPhone 14 Pro, 15 and newer |
+| 🎚 **Manual exposure** | ISO and shutter via log-scale sliders or one-click presets (1/8000 … 1 s), exposure meter, EV compensation in auto |
+| 🎯 **Precise focus** | Lens position in 0.001 steps, `[` `]` nudges, **2×/4×/8× loupe** at full sensor resolution, click-to-focus |
+| 🔭 **Every lens** | Ultra wide / wide / **telephoto** (whatever your iPhone has) + digital zoom |
+| 🌡 **White balance** | Auto or manual temperature & tint |
+| 📸 **RAW & ProRAW** | HEIF, JPEG, **RAW (DNG)**, Apple ProRAW, up to **48 MP** |
+| 🔁 **Series for stacking** | N frames at a set interval, with a pre-shot delay so the tripod settles |
+| 📊 **Histogram** | Live brightness histogram with a clipping warning |
+| 🌕 **Moon preset** | One click: longest lens, ISO 50, 1/250 s, RAW |
+| 🔴 **Night mode** | Red-only UI on the Mac and a blacked-out phone screen to keep your eyes dark-adapted |
+| 🔒 **Settings stay put** | If iOS silently resets exposure or focus, the app restores your values instantly |
+| ⬇️ **Instant download** | Photos go straight from the phone to your Mac's browser; optionally also to Photos |
+| 🔋 **Phone status** | Battery and overheating shown on the remote |
+| 📱 **On-phone controls too** | Lens, ISO, shutter and focus are also on the iPhone screen, synced with the Mac |
 
-The settings panel scrolls on smaller screens (SE, 6s–8, Plus models). The app runs in portrait;
-the Mac preview always shows the full sensor frame.
+<div align="center">
+<img src="docs/images/remote-night.png" alt="Red night mode" width="700">
+<br><sub>Red night mode — easy on dark-adapted eyes</sub>
+</div>
 
-## Installing on the iPhone
+<!--
+## 📷 Shot with Remote Camera
+<img src="docs/images/moon-sample.jpg" alt="Full Moon shot with an iPhone on a tripod, controlled from a Mac" width="700">
+-->
 
-You need a Mac with **Xcode 15+** and an iPhone on **iOS 15+** (see [Supported iPhones](#supported-iphones)).
-A paid developer account is not
-required — a regular Apple ID works (the app then runs for 7 days; just reinstall it from Xcode).
+## 🚀 Quick start (≈10 minutes)
+
+**You need:** a Mac with Xcode 15+, an iPhone on iOS 15+, a USB cable, and a free Apple ID.
+No paid developer account required.
 
 ```bash
 git clone -b claude/vigilant-fermat-af9osn https://github.com/flywalk4/remote-camera.git
 cd remote-camera
-brew install xcodegen      # Xcode project generator
-xcodegen                   # creates RemoteCamera.xcodeproj
+brew install xcodegen && xcodegen
 open RemoteCamera.xcodeproj
 ```
 
-In Xcode:
-1. Select the **RemoteCamera** project → **Signing & Capabilities** tab → **Team**: your Apple ID
-   (add it under Xcode → Settings → Accounts if needed). If Xcode says the Bundle Identifier is
-   taken, change `com.example.remotecamera` to something of your own, e.g. `com.yourname.remotecamera`.
-2. Connect the iPhone with a cable, select it as the run destination at the top and press ▶︎ (⌘R).
-3. On the iPhone, on first launch: **Settings → General → VPN & Device Management** →
-   trust your developer certificate. On iOS 16+ also enable **Developer Mode**
-   (Settings → Privacy & Security) if iOS asks for it.
-4. Allow the app access to the camera and to the **local network** (the Mac can't connect without it).
+1. In Xcode: **RemoteCamera** target → **Signing & Capabilities** → **Team** → your Apple ID.
+   If the bundle ID is taken, change `com.example.remotecamera` to e.g. `com.yourname.remotecamera`.
+2. Plug in the iPhone, pick it at the top of the Xcode window, press **▶︎**.
+3. On the iPhone: trust your certificate in **Settings → General → VPN & Device Management**
+   (and turn on **Developer Mode** on iOS 16+ if asked). Allow **Camera** and **Local Network**.
+4. The app shows an address like `http://192.168.1.23:8080` — **open it in Safari or Chrome on your Mac.** Done! 🎉
+
+> **No Wi-Fi outdoors?** Turn on **Personal Hotspot** on the iPhone, join it from the Mac and open
+> `http://172.20.10.1:8080`.
 
 <details>
-<summary>Without XcodeGen (create the project manually)</summary>
+<summary>Without XcodeGen (create the project by hand)</summary>
 
-1. Xcode → File → New → Project → iOS **App**, Interface: SwiftUI, Language: Swift, name `RemoteCamera`.
-2. Delete the generated `ContentView.swift` and `RemoteCameraApp.swift`, then drag all files from
-   the `RemoteCamera/` folder into the project.
-3. Drag in the `Web` folder and choose **Create folder references** (blue folder), with the target checked.
-4. In Build Settings set **iOS Deployment Target 17.0** and **Swift Language Version 5**.
-5. In the **Info** tab add the keys from `info.properties` in `project.yml`
-   (at least `NSCameraUsageDescription`, `NSLocalNetworkUsageDescription`, `NSBonjourServices`,
-   `NSPhotoLibraryAddUsageDescription`, `UIFileSharingEnabled`).
+1. Xcode → File → New → Project → iOS **App**, SwiftUI, Swift, name `RemoteCamera`.
+2. Delete the generated `ContentView.swift` and `RemoteCameraApp.swift`, drag in everything from `RemoteCamera/`.
+3. Drag in the `Web` folder as a **folder reference** (blue folder) with the target checked.
+4. Build Settings: **iOS Deployment Target 15.0**, **Swift Language Version 5**.
+5. Add the Info.plist keys listed under `info.properties` in [`project.yml`](project.yml).
 </details>
 
-## Usage
+> Apps signed with a free Apple ID run for 7 days — just press ▶︎ in Xcode again to renew.
 
-1. Put the iPhone on a tripod and launch the app. The address is shown at the top, e.g.
-   `http://192.168.1.23:8080`.
-2. Open that address in a browser on the Mac (Safari or Chrome).
-3. The iPhone and the Mac must be on the same network. **Outdoors without Wi-Fi**: turn on
-   Personal Hotspot on the iPhone and connect the Mac to it via Wi-Fi or cable — the address will be
-   `http://172.20.10.1:8080`.
-4. Keep the app in the foreground: iOS turns off the camera for apps in the background. You can
-   black out the screen with the 🌙 button.
+## 🌕 Shooting the Moon — step by step
 
-### Remote keyboard shortcuts
+1. Click **🌕 Moon preset**.
+2. Center the Moon (press `G` for a grid).
+3. **Focus:** press `L` for the 4–8× loupe, switch focus to **Manual** and nudge with `[` `]` until the craters on
+   the terminator (the light/shadow line) are razor sharp. iPhone "infinity" is rarely exactly 1.0 — trust your eyes.
+4. **Exposure:** shorten the shutter until the histogram's *clipped* warning disappears — usually ISO 50–100 at
+   1/250–1/2000 s. Slightly dark is better: RAW lifts shadows, but blown-out highlights are gone forever.
+5. Set a **2 s delay** and a **series of 20–50 frames** at 0.5 s, press `Space`.
+6. Hit **download all** and stack the DNGs in AutoStakkert!, Siril or RegiStax for a sharper, cleaner Moon.
 
-| Key | Action |
+**Tips:** a clip-on telephoto/binocular adapter works great — keep it clean and centered to avoid halos and ghost
+reflections. The Moon drifts across the frame within minutes, so re-center between series.
+
+## ⌨️ Keyboard shortcuts
+
+| Key | Action | | Key | Action |
+|---|---|---|---|---|
+| `Space` | Shoot | | `L` | Loupe 1× → 2× → 4× → 8× |
+| `Esc` | Stop a series | | `G` | Grid |
+| `[` / `]` | Focus nearer / farther (`Shift` = bigger step) | | `H` | Histogram |
+| | | | `N` | Red night mode |
+
+## 📱 Supported iPhones
+
+**Every iPhone that runs iOS 15 or later** — iPhone 6s, SE (all generations), 7, 8, X, XS, XR, 11, 12, 13, 14, 15,
+16, 17 and all Plus/Pro/Max/mini models. The app adapts to the hardware and hides what your camera can't do:
+
+| Feature | Available on |
 |---|---|
-| `Space` | Shoot (respecting delay/series settings) |
-| `Esc` | Stop a series |
-| `L` | Loupe 1× → 2× → 4× → 8× |
-| `[` / `]` | Focus slightly nearer / farther (`Shift` for a bigger step) |
-| `G` | Grid |
-| `H` | Show/hide histogram |
-| `N` | Red night mode |
+| Manual ISO, shutter, focus, white balance, RAW (DNG) | all supported iPhones |
+| HEIF | iPhone 7 and newer (older models shoot JPEG) |
+| Telephoto lens (2×–5×) | Plus / X / XS / Pro models |
+| Ultra wide lens | iPhone 11 and newer (except SE / XR) |
+| Apple ProRAW | iPhone 12 Pro and newer Pro models |
+| 48 MP + resolution switch | iPhone 14 Pro, 15 and newer |
 
-## How to photograph the Moon
+The preview and the photos follow how the phone is standing (portrait or landscape) — detected with the
+accelerometer, so it works even with rotation lock on.
 
-1. Press **🌕 Moon preset**: it selects the telephoto lens, manual exposure at ISO 50 and 1/250 s,
-   white balance ~4800 K, and RAW format.
-2. Aim the iPhone so the Moon is in the center (the `G` grid helps).
-3. **Focus**: turn on the 4–8× loupe (`L`), switch focus to "Manual" and move the slider or use
-   `[` `]` until the craters along the terminator (the light/shadow boundary) are as sharp as possible.
-   Infinity on an iPhone is usually not exactly 1.0 — judge by the image.
-4. **Exposure**: watch the histogram — the "clipped" warning should disappear. The Moon is lit by
-   the Sun, so shutter speeds are short: typically ISO 50–100 and 1/250–1/1000 s.
-   Slight underexposure is better — RAW can lift the shadows, but blown-out maria can't be recovered.
-5. Set a 2 s delay (so the tripod settles) and a series, e.g. 50 frames at a 0.5 s interval.
-6. Download the DNGs to the Mac and stack them in AutoStakkert!/Siril/RegiStax — noise goes down,
-   detail goes up.
-
-Exposure on an iPhone is limited to about 1 second — more than enough for the Moon, but this
-approach won't work for stars or the Milky Way.
-
-## Troubleshooting
-
-**Manual settings reset / the camera refocuses when shooting.** A full-resolution (48 MP)
-capture makes the sensor switch readout mode, and iOS may fall back to auto exposure and
-autofocus while doing so. The app restores your settings right away, but if the photo itself
-comes out refocused or auto-exposed, set **Resolution → 12 MP** in the Capture section
-(or use RAW, which is always 12 MP).
-
-## Project layout
+## 🛠 How it works
 
 ```
-project.yml                        Xcode project definition for XcodeGen
-RemoteCamera/
-  RemoteCameraApp.swift            entry point, starts the camera and the server
-  ContentView.swift                iPhone screen: remote address, preview, blackout
-  CameraControlsView.swift         settings panel on the iPhone (lens, ISO, shutter, focus)
-  CameraController.swift           AVFoundation: lenses, manual settings, capture, series, preview
-  HTTPServer.swift                 mini HTTP server (Network.framework) and MJPEG stream
-  WebAPI.swift                     API routes for the remote
-  PhotoStore.swift                 photo storage
-  Models.swift                     state/settings models (JSON)
-  NetworkInfo.swift                iPhone IP addresses
-Web/                               web remote (served by the app)
-  index.html, app.js, style.css
+ iPhone on a tripod (Remote Camera app)            MacBook (any browser)
+┌───────────────────────────────────────┐        ┌───────────────────────────────┐
+│ AVFoundation: fully manual camera      │ Wi-Fi  │ http://<iPhone IP>:8080       │
+│ built-in HTTP server on port 8080 ─────┼───or──▶│ live MJPEG preview + histogram│
+│ photos saved to Files → Remote Camera  │ Hotspot│ all settings, shutter, gallery│
+└───────────────────────────────────────┘        └───────────────────────────────┘
 ```
 
-### HTTP API
+Safari doesn't let websites control ISO, shutter speed or focus, so the camera side is a native Swift app.
+It serves the remote itself — the Mac only needs a browser. Everything stays on your local network.
+
+<details>
+<summary>HTTP API (script your camera!)</summary>
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/state` | All current camera parameters and ranges |
-| POST | `/api/settings` | `{lens, zoom, exposureMode, iso, shutter, bias, focusMode, lensPosition, wbMode, temperature, tint, point:{x,y}, loupe}` — any subset |
+| GET | `/api/state` | Current camera parameters and their ranges |
+| POST | `/api/settings` | Any subset of `{lens, zoom, exposureMode, iso, shutter, bias, focusMode, lensPosition, wbMode, temperature, tint, point:{x,y}, loupe}` |
 | POST | `/api/capture` | `{format: heif\|jpeg\|raw\|proraw, count, interval, delay, saveToPhotos, resolution: max\|12mp}` |
-| POST | `/api/cancel` | Cancel a series |
+| POST | `/api/cancel` | Stop a series |
 | GET | `/api/photos` | List photos |
-| GET | `/photos/<name>` | File (`?download=1` to download) |
+| GET | `/photos/<name>` | Download a photo (`?download=1` as attachment) |
 | POST | `/api/photos/delete` | `{name}` |
 | GET | `/stream` | MJPEG preview |
 
-So the camera can also be scripted, for example:
-`curl -X POST http://172.20.10.1:8080/api/capture -d '{"format":"raw","count":100,"interval":1}'`.
+```bash
+# 100 RAW frames, one per second
+curl -X POST http://172.20.10.1:8080/api/capture -d '{"format":"raw","count":100,"interval":1}'
+```
+</details>
+
+## 🧪 Tests
+
+Every push runs [CI](.github/workflows/ci.yml) with two jobs:
+
+| Suite | What it covers | Run locally |
+|---|---|---|
+| **Web remote** — 29 Playwright tests ([`tests/web`](tests/web/remote.spec.js)) | Connection & reconnect, preview & histogram, lenses, exposure (log sliders, presets, auto/manual), focus & loupe, click-to-focus mapping, white balance, Moon preset, series capture & cancel, per-model formats/resolution, gallery download & delete, shortcuts | `npm ci && npx playwright install chromium && npm test` |
+| **iOS app** — 41 XCTest tests ([`RemoteCameraTests`](RemoteCameraTests)) | HTTP parser, the real server over the network, every API route, path-traversal protection, JSON models, photo storage, slider math, orientation mapping | Xcode → **⌘U** (any iPhone simulator) |
+
+The web tests run against [`tests/web/mock-server.js`](tests/web/mock-server.js) — a mock of the iPhone API that
+streams a synthetic Moon. Handy for hacking on the UI without a phone: `npm run mock` → http://localhost:8090.
+`npm run screenshots` regenerates the images in this README.
+
+## ❓ Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| The Mac can't open the address | Same Wi-Fi (or the iPhone's hotspot)? Is **Local Network** allowed for Remote Camera in iPhone Settings → Privacy & Security? Keep the app in the foreground. |
+| The camera stops when the screen locks | iOS pauses the camera for background apps. The app disables auto-lock; use the 🌙 button to black out the screen instead of locking it. |
+| Settings reset or the camera refocuses when shooting at max resolution | The app restores them immediately. If the photo itself is affected, set **Resolution → 12 MP** (or shoot RAW, which is always 12 MP). |
+| The image is rotated | Orientation comes from the accelerometer; while the phone points straight up it keeps the last orientation. Tilt it briefly and it updates. |
+| "Untrusted Developer" on the iPhone | Settings → General → VPN & Device Management → trust your Apple ID. |
+
+## 📂 Project layout
+
+```
+project.yml                  XcodeGen project (app + unit tests)
+RemoteCamera/                iOS app (SwiftUI + AVFoundation + Network.framework)
+  CameraController.swift     lenses, manual settings, capture, series, preview, settings guard
+  OrientationMonitor.swift   accelerometer-based orientation for preview and photos
+  HTTPServer.swift           tiny HTTP/1.1 server and MJPEG stream
+  WebAPI.swift               API routes for the remote
+  ContentView.swift          iPhone screen
+  CameraControlsView.swift   on-phone settings panel
+  PhotoStore.swift           photo storage
+  Models.swift               JSON models
+Web/                         the browser remote (served by the app)
+RemoteCameraTests/           XCTest unit & integration tests
+tests/web/                   Playwright tests, mock iPhone API, screenshot script
+```
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome — especially photos taken with the app, results on different iPhone
+models, and ideas for astrophotography features. Please run `npm test` (and ⌘U in Xcode for Swift changes)
+before opening a PR.
+
+<div align="center">
+
+**Clear skies! 🔭**
+
+</div>

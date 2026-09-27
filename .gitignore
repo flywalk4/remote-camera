@@ -3,3 +3,6 @@
 RemoteCamera/Info.plist
 xcuserdata/
 DerivedData/
+node_modules/
+test-results/
+playwright-report/

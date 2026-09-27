@@ -14,6 +14,9 @@ targets:
   RemoteCamera:
     type: application
     platform: iOS
+    scheme:
+      testTargets:
+        - RemoteCameraTests
     sources:
       - path: RemoteCamera
       - path: Web
@@ -45,3 +48,18 @@ targets:
           - _http._tcp
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
+        # Lets the unit tests talk to the app's own server on 127.0.0.1 over plain HTTP.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+
+  RemoteCameraTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: RemoteCameraTests
+    dependencies:
+      - target: RemoteCamera
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.remotecamera.tests

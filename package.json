@@ -1,0 +1,13 @@
+{
+  "name": "remote-camera",
+  "private": true,
+  "description": "Tests and tooling for the Remote Camera web remote",
+  "scripts": {
+    "test": "playwright test",
+    "mock": "node tests/web/mock-server.js",
+    "screenshots": "node tests/web/screenshots.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
