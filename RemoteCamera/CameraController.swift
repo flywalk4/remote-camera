@@ -150,9 +150,13 @@ final class CameraController: NSObject, @unchecked Sendable {
         if photoOutput.isAppleProRAWSupported {
             photoOutput.isAppleProRAWEnabled = true
         }
-        let sizes = device.activeFormat.supportedMaxPhotoDimensions
-        if let largest = sizes.max(by: { Int($0.width) * Int($0.height) < Int($1.width) * Int($1.height) }) {
-            photoOutput.maxPhotoDimensions = largest
+        if #available(iOS 16.0, *) {
+            let sizes = device.activeFormat.supportedMaxPhotoDimensions
+            if let largest = sizes.max(by: { Int($0.width) * Int($0.height) < Int($1.width) * Int($1.height) }) {
+                photoOutput.maxPhotoDimensions = largest
+            }
+        } else {
+            photoOutput.isHighResolutionCaptureEnabled = true
         }
     }
 
@@ -329,7 +333,12 @@ final class CameraController: NSObject, @unchecked Sendable {
 
             let format = device.activeFormat
             s.lens = device.uniqueID
-            let dims = photoOutput.maxPhotoDimensions
+            let dims: CMVideoDimensions
+            if #available(iOS 16.0, *) {
+                dims = photoOutput.maxPhotoDimensions
+            } else {
+                dims = format.highResolutionStillImageDimensions
+            }
             s.resolution = "\(dims.width)×\(dims.height)"
 
             s.zoom = Double(device.videoZoomFactor)
@@ -479,7 +488,7 @@ final class CameraController: NSObject, @unchecked Sendable {
 
         let format = request.format
         let saveToPhotos = request.saveToPhotos
-        let dimensions = photoDimensions(fullResolution: request.resolution != "12mp")
+        let fullResolution = request.resolution != "12mp"
         let settings: AVCapturePhotoSettings
         let ext: String
         let raw = photoOutput.availableRawPhotoPixelFormatTypes
@@ -496,11 +505,11 @@ final class CameraController: NSObject, @unchecked Sendable {
                 completion("ProRAW is not available on this iPhone"); return
             }
             settings = AVCapturePhotoSettings(rawPixelFormatType: type)
-            settings.maxPhotoDimensions = dimensions
+            applyResolution(to: settings, fullResolution: fullResolution)
             ext = "dng"
         case "jpeg":
             settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
-            settings.maxPhotoDimensions = dimensions
+            applyResolution(to: settings, fullResolution: fullResolution)
             // In manual mode use minimal "smart" processing so the frame matches the settings.
             settings.photoQualityPrioritization = desired.manualExposure ? .speed : .quality
             ext = "jpg"
@@ -512,7 +521,7 @@ final class CameraController: NSObject, @unchecked Sendable {
                 settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
                 ext = "jpg"
             }
-            settings.maxPhotoDimensions = dimensions
+            applyResolution(to: settings, fullResolution: fullResolution)
             settings.photoQualityPrioritization = desired.manualExposure ? .speed : .quality
         }
 
@@ -542,8 +551,18 @@ final class CameraController: NSObject, @unchecked Sendable {
         photoOutput.capturePhoto(with: settings, delegate: processor)
     }
 
+    private func applyResolution(to settings: AVCapturePhotoSettings, fullResolution: Bool) {
+        if #available(iOS 16.0, *) {
+            settings.maxPhotoDimensions = photoDimensions(fullResolution: fullResolution)
+        } else if photoOutput.isHighResolutionCaptureEnabled {
+            // iOS 15: the high-resolution flag is the only size control.
+            settings.isHighResolutionPhotoEnabled = fullResolution
+        }
+    }
+
     /// Full sensor resolution (up to 48 MP) or the standard ~12 MP size. 12 MP avoids the
     /// sensor mode switch that a 48 MP capture needs.
+    @available(iOS 16.0, *)
     private func photoDimensions(fullResolution: Bool) -> CMVideoDimensions {
         guard !fullResolution, let device else { return photoOutput.maxPhotoDimensions }
         let area = { (d: CMVideoDimensions) in Int(d.width) * Int(d.height) }

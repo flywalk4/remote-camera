@@ -15,7 +15,7 @@ struct ContentView: View {
                 infoCard
                 Spacer()
                 if showControls {
-                    CameraControlsView()
+                    controls
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 HStack(spacing: 24) {
@@ -61,6 +61,20 @@ struct ContentView: View {
         .foregroundStyle(.white)
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
         .statusBarHidden(model.dimmed)
+    }
+
+    /// On short screens (iPhone SE, 6s/7/8, Plus models) the panel scrolls
+    /// instead of pushing the address card and the shutter off screen.
+    @ViewBuilder
+    private var controls: some View {
+        if UIScreen.main.bounds.height < 800 {
+            ScrollView {
+                CameraControlsView()
+            }
+            .frame(maxHeight: UIScreen.main.bounds.height * 0.42)
+        } else {
+            CameraControlsView()
+        }
     }
 
     private var infoCard: some View {

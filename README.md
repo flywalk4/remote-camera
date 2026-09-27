@@ -53,9 +53,30 @@ panel** ("Settings" button): lens, ISO, shutter speed, focus — kept in sync wi
 The iPhone shutter button reuses the format, resolution and delay last chosen in the remote.
 The 🌙 button blacks out the screen (minimum brightness) while the app keeps running.
 
+## Supported iPhones
+
+Every iPhone that runs **iOS 15 or later**: iPhone 6s / 6s Plus, SE (all generations), 7, 8, X,
+XS, XR, 11, 12, 13, 14, 15, 16, 17 and their Plus/Pro/Max/mini variants. (iPhone 6 and older are
+stuck on iOS 12, which modern Xcode can no longer build for.)
+
+The app adapts to the hardware — options the camera doesn't have are simply hidden:
+
+| Feature | Available on |
+|---|---|
+| Manual ISO, shutter, focus, white balance, RAW (DNG) | all supported iPhones |
+| HEIF format | iPhone 7 and newer (older models shoot JPEG) |
+| Telephoto lens (2×–5×) | Plus/X/XS/Pro models with a telephoto camera |
+| Ultra wide lens | iPhone 11 and newer (except SE/XR) |
+| Apple ProRAW | iPhone 12 Pro and newer Pro models |
+| 48 MP capture + Resolution option | iPhone 14 Pro, 15 and newer |
+
+The settings panel scrolls on smaller screens (SE, 6s–8, Plus models). The app runs in portrait;
+the Mac preview always shows the full sensor frame.
+
 ## Installing on the iPhone
 
-You need a Mac with **Xcode 15+** and an iPhone on **iOS 17+**. A paid developer account is not
+You need a Mac with **Xcode 15+** and an iPhone on **iOS 15+** (see [Supported iPhones](#supported-iphones)).
+A paid developer account is not
 required — a regular Apple ID works (the app then runs for 7 days; just reinstall it from Xcode).
 
 ```bash
@@ -72,7 +93,7 @@ In Xcode:
    taken, change `com.example.remotecamera` to something of your own, e.g. `com.yourname.remotecamera`.
 2. Connect the iPhone with a cable, select it as the run destination at the top and press ▶︎ (⌘R).
 3. On the iPhone, on first launch: **Settings → General → VPN & Device Management** →
-   trust your developer certificate. Also enable **Developer Mode**
+   trust your developer certificate. On iOS 16+ also enable **Developer Mode**
    (Settings → Privacy & Security) if iOS asks for it.
 4. Allow the app access to the camera and to the **local network** (the Mac can't connect without it).
 

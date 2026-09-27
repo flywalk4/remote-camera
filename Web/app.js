@@ -155,8 +155,11 @@ function render() {
   $('tintOut').textContent = Math.round(s.tint);
 
   renderFormats(s.formats);
-  // Bayer RAW is always captured at the sensor's standard size.
-  $('resolutionField').hidden = $('format').value === 'raw';
+  // Bayer RAW is always captured at the sensor's standard size, and on 12 MP cameras
+  // (most iPhones before the 14 Pro) there is nothing to choose.
+  const [w, h] = (s.resolution || '').split('×').map(Number);
+  const highRes = w * h > 13_000_000;
+  $('resolutionField').hidden = $('format').value === 'raw' || !highRes;
   if (s.resolution) $('resolution').options[0].textContent = `Maximum (${s.resolution})`;
   renderCapture(s.capture);
 
